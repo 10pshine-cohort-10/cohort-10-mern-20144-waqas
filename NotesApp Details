@@ -1,0 +1,900 @@
+# Notes Management System – Complete Project Instructions
+
+Project specification
+
+Development brief
+
+# Notes Management System
+
+A secure, full-stack application for creating, editing, organizing, and managing personal notes.
+
+Frontend
+
+React.js, Tailwind Css, React Toastify
+
+Backend
+
+Node.js + Express
+
+Database
+
+PostgreSQL
+
+ORM
+
+None – Native SQL
+
+Logging
+
+Pino
+
+Testing
+
+Mocha + Jest
+
+## 1. Project objective
+
+Develop a complete full-stack Notes Management System where users can register, securely log in, and manage their personal notes.
+
+Each user must have access only to their own notes. The application must provide rich-text editing, secure authentication, proper exception handling, structured application logging, automated testing, and code quality analysis.
+
+The application should be responsive, user-friendly, maintainable, and structured according to professional software development practices.
+
+## 2. Mandatory technology stack
+
+Use the following technologies throughout the project.
+
+| Technology                   | Responsibility                |
+| ---------------------------- | ----------------------------- |
+| Node.js                      | Backend runtime               |
+| Express.js                   | REST API development          |
+| React.js + Vite              | Frontend                      |
+| PostgreSQL                        | Relational database           |
+| pg                       | PostgreSQL connectivity            |
+| Native SQL                   | Database queries              |
+| Pino                         | Application logging           |
+| pino-http                    | HTTP request/response logging |
+| bcrypt                       | Password hashing              |
+| JWT                          | Authentication                |
+| React Router DOM             | Frontend routing              |
+| Axios                        | API communication             |
+| Tailwind CSS                 | Responsive UI                 |
+| TipTap                       | Rich-text editor              |
+| Mocha + Chai                 | Backend testing               |
+| Jest + React Testing Library | Frontend testing              |
+| SonarQube                    | Code quality analysis         |
+| Git + GitHub                 | Version control               |
+
+Important instructions:
+
+- Do not install or use Prisma.
+- Do not use MongoDB.
+- Do not use Sequelize or another ORM.
+- Use PostgreSQL with `pg`.
+- Write native, parameterized SQL queries.
+- Use Mocha/Chai for backend tests and Jest for frontend tests.
+- Do not replace required technologies with alternatives without permission.
+
+## 3. Application features
+
+### A. User authentication and authorization
+
+Implement a complete authentication system.
+
+Registration:
+
+- Full name.
+- Email address.
+- Password.
+- Confirm password.
+- Validate all fields.
+- Prevent duplicate email registration.
+- Hash passwords using bcrypt.
+- Store user information in PostgreSQL.
+
+Login:
+
+- Email and password.
+- Validate credentials.
+- Generate JWT after successful authentication.
+- Redirect authenticated users to the dashboard.
+- Display meaningful error messages.
+
+Logout:
+
+- Clear authentication credentials.
+- Invalidate the session/token according to the chosen token strategy.
+- Redirect the user to login.
+
+Authorization:
+
+- Protect all private routes.
+- Verify JWT on protected API requests.
+- Prevent users from accessing other users' notes.
+- Never trust a user ID supplied by the frontend to determine note ownership.
+
+Use a secure HTTP-only cookie for JWT storage, with appropriate `SameSite`, `Secure`, and CSRF protections for the deployment environment.
+
+### B. Notes management
+
+Every authenticated user should be able to manage personal notes.
+
+Create notes:
+
+- Note title.
+- Rich-text content.
+- Automatic creation timestamp.
+- Automatic update timestamp.
+- Save note functionality.
+
+View notes:
+
+- Display all notes belonging to the logged-in user.
+- Show note title and content preview.
+- Display creation and update dates.
+- Open a note to view its complete content.
+
+Edit notes:
+
+- Update title.
+- Edit rich-text content.
+- Save changes.
+- Update modification timestamp.
+
+Delete notes:
+
+- Delete selected notes.
+- Show confirmation before deletion.
+- Prevent unauthorized deletion.
+
+Additional note functionality:
+
+- Search notes by title and content.
+- Sort notes by newest and oldest.
+- Filter notes.
+- Display an empty state when no notes exist.
+- Show loading indicators and error messages.
+
+### C. Rich-text editor
+
+Use TipTap for note creation and editing.
+
+Include:
+
+- Bold and italic.
+- Underline.
+- Headings.
+- Bullet lists.
+- Numbered lists.
+- Text alignment.
+- Links.
+- Blockquotes.
+- Undo and redo.
+
+Store the editor content in PostgreSQL as HTML or JSON. Prefer TipTap's structured JSON format for editor content and validate it before rendering.
+
+### D. User profile
+
+Create an optional profile section.
+
+Include:
+
+- User's name.
+- Email address.
+- Account creation date.
+- Update profile information.
+- Logout functionality.
+
+### E. Optional features
+
+Implement these only after all mandatory functionality is complete.
+
+- Export notes as PDF or text.
+- Import notes from supported files.
+- Real-time updates using Socket.IO.
+- Pin important notes.
+- Archive notes.
+- Dark/light theme.
+- Pagination for large note collections.
+
+## 4. PostgreSQL database design
+
+Use PostgreSQL directly through `pg`.
+
+Create a database named:
+
+```
+CREATE DATABASE notes_management;
+```
+
+Create the following tables:
+
+Users
+
+- `id`: Primary key, auto increment.
+- `name`: User's full name.
+- `email`: Unique email address.
+- `password`: Hashed password.
+- `created_at`: Account creation date.
+- `updated_at`: Last modification date.
+
+Notes
+
+- `id`: Primary key, auto increment.
+- `user_id`: Foreign key referencing users.
+- `title`: Note title.
+- `content`: JSON content for TipTap editor.
+- `created_at`: Note creation date.
+- `updated_at`: Last modification date.
+
+Refresh Tokens / Sessions
+
+- `id`: Primary key.
+- `user_id`: Foreign key.
+- `token_hash`: Hashed refresh token.
+- `expires_at`: Expiration date.
+- `created_at`: Creation date.
+- `revoked_at`: Revocation date, nullable.
+
+Use foreign keys with appropriate delete behavior, unique constraints, and indexes.
+
+### Database rules
+
+1. Every note must belong to an existing user.
+2. Deleting a user should delete their notes and associated refresh tokens.
+3. A user cannot access another user's notes.
+4. Always use parameterized SQL queries to prevent SQL injection.
+5. Use transactions when multiple related database operations must succeed together.
+6. Never store plain-text passwords or refresh tokens.
+7. Use connection pooling instead of creating a new database connection for every query.
+
+## 5. Backend architecture
+
+Use a modular MVC/service/repository architecture.
+
+The responsibilities must be separated:
+
+- Routes: API endpoint definitions.
+- Controllers: Request and response handling.
+- Services: Application business logic.
+- Repositories: SQL queries and database operations.
+- Middlewares: Authentication, validation, and exception handling.
+- Config: Database and logger configuration.
+- Utils: Reusable helper functions.
+
+### Recommended backend folder structure
+
+```
+backend/
+│   ├── config/
+│   │   ├── database.js
+│   │   └── logger.js
+│   │
+│   ├── controllers/
+│   │   ├── auth.controller.js
+│   │   ├── note.controller.js
+│   │   └── user.controller.js
+│   │
+│   │
+│   ├── models/
+│   │   ├── note.model.js
+│   │   └── user.model.js
+│   │
+│   ├── routes/
+│   │   ├── auth.routes.js
+│   │   ├── note.routes.js
+│   │   └── user.routes.js
+│   │
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── error.middleware.js
+│   │   ├── validate.middleware.js
+│   │   └── notFound.middleware.js
+│   │
+│   │
+│   ├── utils/
+│   │   ├── token.js
+│   │   └── AppError.js
+│   │
+│   ├── tests/
+│   │   ├── auth.test.js
+│   │   ├── notes.test.js
+│   │   ├── user.test.js
+│   │   └── setup.js
+│   │
+│   ├── index.js
+│
+├── .env
+├── .env.example
+├── .gitignore
+├── .mocharc.json
+└── package.json
+```
+
+## 6. Frontend architecture
+
+Use React.js with Vite and Tailwind CSS.
+
+Use React Router DOM for navigation and Axios for API communication.
+
+### Recommended frontend folder structure
+
+```
+frontend/
+│
+├── src/
+│   ├── assets/
+│   │
+│   ├── components/
+│   │   ├── common/
+│   │   ├── layout/
+│   │   ├── notes/
+│   │   └── editor/
+│   │
+│   ├── pages/
+│   │   ├── Login.jsx
+│   │   ├── Signup.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── NoteEditor.jsx
+│   │   └── Profile.jsx
+│   │
+│   ├── services/
+│   │   └── api.js
+│   │
+│   ├── zuustand store/
+│   │   └── useAuthStore.js
+│   │
+│   │
+│   ├── utils/
+│   ├── tests/
+│   ├── App.jsx
+│   └── main.jsx
+│
+├── jest.config.js
+├── .env
+└── package.json
+```
+
+Keep components reusable but avoid unnecessary component splitting. Maintain simple, readable code.
+
+## 7. API endpoint specifications
+
+Create RESTful APIs using the following endpoints.
+
+Authentication
+
+| Method | Endpoint            | Description                     |
+| ------ | ------------------- | ------------------------------- |
+| POST   | `/api/auth/signup`  | Register                        |
+| POST   | `/api/auth/login`   | Login                           |
+| POST   | `/api/auth/logout`  | Logout and revoke refresh token |
+| POST   | `/api/auth/refresh` | Refresh access token            |
+| GET    | `/api/auth/me`      | Get authenticated user          |
+
+Notes
+
+| Method | Endpoint         | Description            |
+| ------ | ---------------- | ---------------------- |
+| POST   | `/api/notes`     | Create note            |
+| GET    | `/api/notes`     | Get all personal notes |
+| GET    | `/api/notes/:id` | Get one note           |
+| PUT    | `/api/notes/:id` | Update note            |
+| DELETE | `/api/notes/:id` | Delete note            |
+
+User profile
+
+| Method | Endpoint             | Description    |
+| ------ | -------------------- | -------------- |
+| GET    | `/api/users/profile` | Get profile    |
+| PUT    | `/api/users/profile` | Update profile |
+
+All note endpoints must be protected.
+
+For every note operation, verify ownership using both the note ID and authenticated user ID in the SQL query.
+
+For example:
+
+```
+SELECT *
+FROM notes
+WHERE id = $1 AND user_id = $2;
+```
+
+Never retrieve a note using its ID alone when handling a user's private request.
+
+## 8. Pino logging requirements
+
+Pino is a mandatory project requirement.
+
+Configure one centralized logger and reuse it throughout the backend.
+
+Use `pino-http` for HTTP request and response logging.
+
+Log the following events:
+
+| Event                       | Log level |
+| --------------------------- | --------- |
+| Server started              | info      |
+| Database connected          | info      |
+| User registered             | info      |
+| User logged in              | info      |
+| User logged out             | info      |
+| Note created                | info      |
+| Note updated                | info      |
+| Note deleted                | info      |
+| Invalid authentication      | warn      |
+| Unauthorized access         | warn      |
+| Database failure            | error     |
+| Application exception       | error     |
+| Unexpected critical failure | fatal     |
+
+Use structured JSON logs in production and readable pretty logs in development.
+
+Include useful contextual information such as:
+
+- Request ID.
+- HTTP method.
+- Request URL.
+- Response status.
+- Response time.
+- User ID when authenticated.
+- Error name and stack trace in server-side error logs.
+
+Security requirements:
+
+- Never log passwords.
+- Never log JWTs or refresh tokens.
+- Never log cookies or authorization headers.
+- Never log private note content.
+- Configure Pino redaction for sensitive fields.
+- Do not expose internal errors or stack traces to frontend users.
+
+## 9. Global exception handling
+
+Implement centralized Express error handling.
+
+The backend should handle:
+
+- Validation errors.
+- Authentication errors.
+- Authorization errors.
+- Missing resources.
+- Duplicate email errors.
+- Database connection errors.
+- SQL execution errors.
+- Unexpected server errors.
+
+Use a consistent API response format.
+
+Successful response:
+
+```
+{
+  "success": true,
+  "message": "Note created successfully",
+  "data": {}
+}
+```
+
+Error response:
+
+```
+{
+  "success": false,
+  "message": "Something went wrong",
+  "errors": []
+}
+```
+
+Use appropriate HTTP status codes, such as 400, 401, 403, 404, 409, and 500.
+
+Log exceptions using Pino, but return safe and meaningful messages to the client.
+
+Ensure asynchronous Express handlers properly forward errors to the global error middleware.
+
+## 10. Frontend UI/UX requirements
+
+Build a modern, professional notes application.
+
+Use a clean SaaS dashboard design rather than a basic CRUD interface.
+
+### Login and signup screens
+
+- Modern centered authentication layout.
+- Clean form fields.
+- Show/hide password.
+- Field-level validation.
+- Loading state during submission.
+- Meaningful error and success notifications.
+- Responsive on mobile and desktop.
+
+### Dashboard
+
+Include:
+
+- Sidebar navigation.
+- Application logo/name.
+- Dashboard overview.
+- Total notes count.
+- Search input.
+- Create Note button.
+- Notes grid.
+- User profile section.
+- Logout action.
+
+Each note card should display:
+
+- Note title.
+- Short content preview.
+- Last updated date.
+- Edit action.
+- Delete action.
+
+### Note editor
+
+Include:
+
+- Note title input.
+- TipTap rich-text editing area.
+- Formatting toolbar.
+- Save button.
+- Cancel button.
+- Unsaved changes warning when appropriate.
+
+### User profile
+
+Include:
+
+- User name.
+- Email.
+- Account creation date.
+- Edit profile.
+- Logout.
+
+### Design guidelines
+
+- Use Tailwind CSS consistently.
+- Use a professional neutral color palette with a subtle maroon accent.
+- Maintain proper spacing and typography.
+- Use subtle shadows and borders.
+- Add smooth but lightweight transitions.
+- Ensure complete responsiveness.
+- Avoid unnecessary animations, excessive gradients, and clutter.
+- Include loading skeletons, empty states, and error states.
+- Prevent horizontal overflow on mobile devices.
+
+## 11. Testing requirements
+
+Testing is mandatory, not optional.
+
+### Backend testing: Mocha + Chai
+
+Install and configure:
+
+```
+npm install -D mocha chai supertest
+```
+
+Test these areas:
+
+Authentication
+
+- Successful registration.
+- Duplicate email rejection.
+- Password hashing.
+- Successful login.
+- Incorrect password rejection.
+- Invalid JWT rejection.
+- Logout and refresh-token revocation.
+
+Notes
+
+- Create note.
+- Retrieve personal notes.
+- Retrieve individual note.
+- Update note.
+- Delete note.
+- Reject unauthorized access.
+- Prevent cross-user note access.
+
+Database
+
+- Valid database connection.
+- Database query behavior.
+- Constraint handling.
+- Transaction behavior where applicable.
+
+Exception handling
+
+- Validation errors.
+- Not-found errors.
+- Unexpected errors.
+- Correct HTTP status codes.
+
+Use Supertest to test Express API endpoints.
+
+Use a separate test database. Never run automated tests against production data.
+
+### Frontend testing: Jest + React Testing Library
+
+Install and configure:
+
+```
+npm install -D jest @testing-library/react \
+@testing-library/jest-dom \
+@testing-library/user-event \
+jest-environment-jsdom
+```
+
+Test:
+
+- Login screen.
+- Signup screen.
+- Form validation.
+- Authentication state.
+- Protected routes.
+- Dashboard rendering.
+- Notes listing.
+- Search functionality.
+- Note editor.
+- Save and cancel operations.
+- Delete confirmation.
+- Logout functionality.
+
+Mock API requests where appropriate.
+
+Ensure tests verify actual behavior rather than simply checking whether components render.
+
+## 12. SonarQube integration
+
+Integrate SonarQube into the project to analyze both frontend and backend source code.
+
+It should identify:
+
+- Bugs.
+- Code smells.
+- Security hotspots.
+- Vulnerabilities.
+- Duplicate code.
+- Maintainability issues.
+- Test coverage.
+
+Configure `sonar-project.properties` in the root directory.
+
+Requirements:
+
+1. Analyze JavaScript and JSX files.
+2. Exclude `node_modules`, build folders, and generated files.
+3. Configure frontend and backend test coverage reports.
+4. Fix critical bugs and security vulnerabilities.
+5. Review security hotspots.
+6. Run analysis after major development milestones.
+7. Do not consider the project finished until the analysis has been reviewed.
+
+Generate LCOV coverage reports from the backend and frontend test suites so SonarQube can consume them.
+
+
+
+## 14. Environment configuration
+
+Create separate environment files for frontend and backend.
+
+Backend `.env.example`:
+
+```
+PORT=5000
+NODE_ENV=development
+
+JWT_ACCESS_SECRET=
+JWT_REFRESH_SECRET=
+
+ACCESS_TOKEN_EXPIRY=15m
+REFRESH_TOKEN_EXPIRY=7d
+
+CLIENT_URL=http://localhost:5173
+
+LOG_LEVEL=debug
+```
+
+Frontend `.env.example`:
+
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+Use strong random secrets and never expose backend environment variables to React.
+
+## 15. Development sequence
+
+Follow this exact order. Complete and verify each phase before proceeding.
+
+| Phase | Development task                           |
+| ----- | ------------------------------------------ |
+| 1     | Initialize frontend, backend, and Git      |
+| 2     | Connect PostgreSQL and create database tables   |
+| 3     | Build Express backend architecture         |
+| 4     | Configure Pino and exception handling      |
+| 5     | Implement authentication and authorization |
+| 6     | Implement Notes CRUD APIs                  |
+| 7     | Test backend APIs using Mocha/Chai         |
+| 8     | Build React authentication screens         |
+| 9     | Build dashboard and notes editor           |
+| 10    | Integrate frontend and backend             |
+| 11    | Implement profile and optional features    |
+| 12    | Write frontend tests using Jest            |
+| 13    | Configure and run SonarQube                |
+| 14    | Perform complete application testing       |
+| 15    | Prepare README and final delivery          |
+
+## 16. Important instructions for Google Antigravity
+
+Follow these development rules throughout the project.
+
+1. First inspect the existing project structure before creating or modifying files.
+2. Develop the application phase by phase, following the development sequence above.
+3. Do not generate the entire application in one step.
+4. Complete each feature with working functionality before starting the next feature.
+5. Verify database connectivity before implementing database-dependent APIs.
+6. Create actual PostgreSQL tables using SQL scripts or the connected SQL extension.
+7. Keep database schema scripts in a dedicated `database/` directory in the project root.
+8. Do not use Prisma, Sequelize, MongoDB, or any ORM.
+9. Use native parameterized SQL through `pg`.
+10. Implement proper validation on both frontend and backend.
+11. Never compromise authentication, authorization, or user data privacy.
+12. Implement Pino logging consistently throughout the backend.
+13. Never swallow exceptions or use empty catch blocks.
+14. Write meaningful tests for every critical feature.
+15. Do not use dummy data as a replacement for actual database integration.
+16. Avoid unnecessary dependencies and over-engineered architecture.
+17. Maintain clean, readable, reusable, and maintainable code.
+18. Do not remove existing working functionality while implementing new features.
+19. Run relevant tests after changes and fix errors before proceeding.
+20. Provide a summary of completed work and any remaining issues after each phase.
+
+## 17. Final project acceptance criteria
+
+The project will be considered complete only when all these requirements are satisfied.
+
+- Users can register and log in securely.
+- Users can log out and revoke their refresh sessions.
+- Authentication and authorization work correctly.
+- PostgreSQL stores real user and note records.
+- Users can create, read, update, and delete notes.
+- Users cannot access another user's notes.
+- Rich-text editing works correctly.
+- Search and filtering work.
+- User profile works.
+- Pino logs application events and errors.
+- Global exception handling works.
+- Backend tests pass.
+- Frontend tests pass.
+- SonarQube analysis is configured and reviewed.
+- Git repository is properly maintained.
+- Application is responsive on mobile, tablet, and desktop.
+- README contains setup and execution instructions.
+
+# Copy-ready master instruction for Antigravity
+
+The following is the overall project directive. Use it alongside the detailed specifications above.
+
+# Project: Notes Management System
+
+Develop a professional, secure, full-stack Notes Management System using React.js, Node.js, Express.js, and PostgreSQL.
+
+## Mandatory Technologies
+
+- Frontend: React.js, Vite, Tailwind CSS, React Router DOM, Axios.
+- Backend: Node.js and Express.js.
+- Database: PostgreSQL.
+- Database connectivity: pg with native parameterized SQL.
+- Authentication: JWT and bcrypt.
+- Logging: Pino and pino-http.
+- Rich-text editor: TipTap.
+- Backend testing: Mocha, Chai, and Supertest.
+- Frontend testing: Jest and React Testing Library.
+- Code quality: SonarQube.
+- Version control: Git and GitHub.
+
+Do not use Prisma, Sequelize, MongoDB, or any other ORM.
+
+## Core Features
+
+1. User registration, login, logout, and secure authentication.
+2. User-specific notes management.
+3. Create, read, update, and delete notes.
+4. Rich-text editing with TipTap.
+5. Search and filter notes.
+6. User profile management.
+7. Protected frontend routes and backend APIs.
+8. Centralized exception handling.
+9. Structured application logging using Pino.
+10. Automated frontend and backend testing.
+11. SonarQube code quality analysis.
+
+## Database
+
+Create a PostgreSQL database named `notes_management`.
+
+Implement Users, Notes, and Refresh Tokens/Sessions tables with appropriate primary keys, foreign keys, unique constraints, and indexes.
+
+Use native SQL queries through pg. Implement connection pooling, transactions where necessary, and secure parameterized queries.
+
+Maintain database creation and schema scripts in a dedicated database directory. Review schema changes before applying them.
+
+## Backend
+
+Use a modular architecture with separate routes, controllers, services, repositories, middlewares, validators, utilities, configuration, and tests.
+
+Implement REST APIs for authentication, notes, and user profiles.
+
+Ensure every note operation checks ownership against the authenticated user's ID.
+
+Use short-lived access tokens and revocable refresh tokens. Store refresh token hashes securely and implement appropriate cookie and CSRF protections.
+
+Implement centralized error handling and log application exceptions using Pino.
+
+Never log passwords, tokens, authentication cookies, or private note contents.
+
+## Frontend
+
+Create a responsive, modern SaaS-style application with:
+
+- Login and signup screens.
+- Notes dashboard.
+- Notes cards.
+- Search and filtering.
+- Rich-text note editor.
+- User profile.
+- Protected routes.
+- Loading states.
+- Empty states.
+- Error handling.
+- Notifications and confirmation dialogs.
+
+Use clean, maintainable React components and a consistent Tailwind design system.
+
+## Testing
+
+Use Mocha/Chai/Supertest for backend testing and Jest/React Testing Library for frontend testing.
+
+Test authentication, authorization, note CRUD, database operations, validation, exception handling, and frontend interactions.
+
+Maintain a separate test database.
+
+## SonarQube
+
+Configure SonarQube to analyze both frontend and backend JavaScript/JSX code. Include coverage reports and address important bugs, vulnerabilities, code smells, and security hotspots.
+
+## Development Workflow
+
+Develop in the following order:
+
+1. Project initialization.
+2. PostgreSQL configuration and database creation.
+3. Backend architecture.
+4. Pino and exception handling.
+5. Authentication and authorization.
+6. Notes CRUD APIs.
+7. Backend testing.
+8. React frontend.
+9. API integration.
+10. Frontend testing.
+11. SonarQube.
+12. Final verification and documentation.
+
+## Development Rules
+
+- Work phase by phase.
+- Do not generate the entire project in one step.
+- Inspect the existing code before modifying it.
+- Do not overwrite working functionality unnecessarily.
+- Use actual PostgreSQL integration, not mock data for production functionality.
+- Write clean, maintainable, secure code.
+- Avoid unnecessary packages and over-engineering.
+- Verify each feature before proceeding.
+- Run tests after relevant changes.
+- Never commit secrets or environment files.
+- Ask before destructive database operations.
+- Report completed features, test results, and outstanding issues at the end of each phase.
+
+The final deliverable must be a fully functional, secure, responsive Notes Management System with real PostgreSQL integration, structured Pino logging, centralized exception handling, automated testing, and SonarQube integration.

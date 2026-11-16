@@ -1,0 +1,42 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon -r dotenv/config --experimental-json-modules index.js",
+    "test": "mocha",
+    "test:coverage": "c8 --reporter=lcov --reporter=text mocha",
+    "docs:pdf": "node ../scripts/generate-test-pdf.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.11.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.10",
+    "express": "^5.3.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.12.1",
+    "mssql": "^12.7.14",
+    "multer": "^2.5.0",
+    "nodemailer": "^8.0.7",
+    "nodemon": "^3.1.14",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "pino-http": "^11.0.0"
+  },
+  "devDependencies": {
+    "c8": "^12.0.0",
+    "chai": "^6.3.0",
+    "mocha": "^12.0.3",
+    "pino-pretty": "^13.2.0",
+    "supertest": "^7.3.2"
+  }
+}
