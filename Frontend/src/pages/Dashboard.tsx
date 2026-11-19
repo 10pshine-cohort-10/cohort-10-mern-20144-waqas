@@ -1,25 +1,33 @@
-import { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { FiClock, FiLogOut, FiShield, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import logo from "../assets/logo.png";
 import Seo from "../components/common/Seo";
 import api from "../services/api";
-import useAuthStore, { INACTIVITY_TIMEOUT_MS } from "../store/useAuthStore";
+import useAuthStore, {
+  INACTIVITY_TIMEOUT_MS,
+  type AuthState,
+  type User,
+} from "../store/useAuthStore";
 
 /* Dashboard Page */
 
-function Dashboard() {
+function Dashboard(): React.JSX.Element {
   const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
-  const updateActivity = useAuthStore((state) => state.updateActivity);
-  const isSessionExpired = useAuthStore((state) => state.isSessionExpired);
+  const user: User | null = useAuthStore((state: AuthState) => state.user);
+  const isAuthenticated: boolean = useAuthStore(
+    (state: AuthState) => state.isAuthenticated,
+  );
+  const clearAuth = useAuthStore((state: AuthState) => state.clearAuth);
+  const updateActivity = useAuthStore((state: AuthState) => state.updateActivity);
+  const isSessionExpired = useAuthStore(
+    (state: AuthState) => state.isSessionExpired,
+  );
 
-  const lastThrottleRef = useRef(0);
+  const lastThrottleRef = useRef<number>(0);
 
-  const handleLogout = useCallback(async () => {
+  const handleLogout = useCallback(async (): Promise<void> => {
     try {
       await api.post("/auth/logout").catch(() => {});
     } finally {
@@ -29,7 +37,7 @@ function Dashboard() {
     }
   }, [clearAuth, navigate]);
 
-  const handleInactivityLogout = useCallback(async () => {
+  const handleInactivityLogout = useCallback(async (): Promise<void> => {
     try {
       await api.post("/auth/logout").catch(() => {});
     } finally {
@@ -55,7 +63,7 @@ function Dashboard() {
 
     updateActivity();
 
-    const handleUserInteraction = () => {
+    const handleUserInteraction = (): void => {
       const now = Date.now();
       if (now - lastThrottleRef.current > 15000) {
         lastThrottleRef.current = now;
@@ -63,7 +71,7 @@ function Dashboard() {
       }
     };
 
-    const interactionEvents = [
+    const interactionEvents: readonly string[] = [
       "mousedown",
       "keydown",
       "scroll",
@@ -92,7 +100,7 @@ function Dashboard() {
       }
     }, 30000);
 
-    const handleWindowFocus = () => {
+    const handleWindowFocus = (): void => {
       try {
         const lastActiveStr = localStorage.getItem("notiq_last_active");
         if (lastActiveStr) {
@@ -130,9 +138,9 @@ function Dashboard() {
     handleInactivityLogout,
   ]);
 
-  const displayName =
+  const displayName: string =
     user?.name || user?.username || user?.email?.split("@")[0] || "Friend";
-  const userEmail = user?.email || "";
+  const userEmail: string = user?.email || "";
 
   return (
     <>

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import React, { memo, useState } from "react";
 import {
   FiAlertCircle,
   FiArrowRight,
@@ -12,20 +12,39 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import type { AxiosError, AxiosResponse } from "axios";
 import logo from "../assets/logo.png";
-import AuthVisualCard from "../components/auth/AuthVisualCard";
+import AuthVisualCard, {
+  type AuthVisualHighlight,
+} from "../components/auth/AuthVisualCard";
 import Seo from "../components/common/Seo";
 import Footer from "../components/layout/Footer";
 import Navbar from "../components/layout/Navbar";
 import api from "../services/api";
-import useAuthStore from "../store/useAuthStore";
+import useAuthStore, {
+  type AuthApiResponse,
+  type AuthResponseData,
+  type AuthState,
+  type User,
+} from "../store/useAuthStore";
 
 const MemoizedFooter = memo(Footer);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateLogin({ email, password }) {
-  const errors = {};
+export interface LoginFormValues {
+  email: string;
+  password: string;
+}
+
+export interface LoginFormErrors {
+  email?: string;
+  password?: string;
+  [key: string]: string | undefined;
+}
+
+function validateLogin({ email, password }: LoginFormValues): LoginFormErrors {
+  const errors: LoginFormErrors = {};
   const trimmed = (email || "").trim();
 
   if (!trimmed) {
@@ -43,7 +62,7 @@ function validateLogin({ email, password }) {
   return errors;
 }
 
-const LOGIN_HIGHLIGHTS = [
+const LOGIN_HIGHLIGHTS: AuthVisualHighlight[] = [
   {
     icon: FiCheckCircle,
     title: "Instant Workspace Access",
@@ -66,17 +85,20 @@ const LOGIN_HIGHLIGHTS = [
 
 /* Login Page */
 
-function Login() {
+function Login(): React.JSX.Element {
   const navigate = useNavigate();
-  const setUser = useAuthStore((state) => state.setUser);
+  const setUser = useAuthStore((state: AuthState) => state.setUser);
 
-  const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState<LoginFormValues>({
+    email: "",
+    password: "",
+  });
+  const [errors, setErrors] = useState<LoginFormErrors>({});
+  const [serverError, setServerError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleChange = (event) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -87,7 +109,9 @@ function Login() {
     }
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
     setServerError("");
 
@@ -99,13 +123,17 @@ function Login() {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post("/auth/login", {
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-      });
+      const response: AxiosResponse<AuthApiResponse> = await api.post<AuthApiResponse>(
+        "/auth/login",
+        {
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        },
+      );
 
-      const payload = response.data?.data || response.data;
-      const authenticatedUser = payload?.user;
+      const payload: AuthResponseData | AuthApiResponse | undefined =
+        response.data?.data || response.data;
+      const authenticatedUser: User | undefined = payload?.user;
 
       if (!authenticatedUser) {
         throw new Error("Invalid response format from server.");
@@ -114,10 +142,15 @@ function Login() {
       setUser(authenticatedUser);
       toast.success(response.data?.message || "Welcome back to Notiq!");
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{
+        message?: string;
+        errors?: Array<{ message?: string; field?: string }>;
+      }>;
       const message =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0]?.message ||
+        axiosErr.response?.data?.message ||
+        axiosErr.response?.data?.errors?.[0]?.message ||
+        (err instanceof Error ? err.message : null) ||
         "Failed to sign in. Please check your credentials.";
       setServerError(message);
       toast.error(message);

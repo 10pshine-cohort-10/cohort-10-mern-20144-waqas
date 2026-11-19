@@ -1,8 +1,14 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-/* Hero Section */
+/**
+ * @typedef {Object} TaskItem
+ * @property {string} label
+ * @property {string} dotClass
+ * @property {boolean} [done]
+ */
 
+/** @type {TaskItem[]} */
 const TASK_ITEMS = [
   { label: "Inbox: Review meeting notes", dotClass: "bg-neon-violet" },
   { label: "Next Up: Draft project brief", dotClass: "bg-neon-blue" },
@@ -22,6 +28,48 @@ const PILL_TONES = {
     "text-secondary bg-accent-cyan/10 border-accent-cyan/20 dark:text-neon-cyan dark:bg-neon-cyan/15 dark:border-neon-cyan/30",
 };
 
+/**
+ * @typedef {keyof typeof PILL_TONES} PillToneId
+ */
+
+/**
+ * @typedef {Object} PillIconProps
+ * @property {PillToneId} id
+ */
+
+/**
+ * @typedef {Object} CategoryPillProps
+ * @property {PillToneId} id
+ * @property {import("react").ReactNode} [label]
+ * @property {string} [className]
+ * @property {import("react").ReactNode} [children]
+ */
+
+/**
+ * @typedef {Object} TaskDashboardCardProps
+ * @property {string} [className]
+ * @property {import("react").ReactNode} [children]
+ */
+
+/**
+ * @typedef {Object} LinkedKnowledgeCardProps
+ * @property {string} [className]
+ * @property {import("react").ReactNode} [children]
+ */
+
+/**
+ * @typedef {Object} MicroChipProps
+ * @property {import("react").ReactNode} [label]
+ * @property {string} [tone]
+ * @property {string} [className]
+ * @property {import("react").ReactNode} [children]
+ * @property {import("react").ComponentType<{ className?: string }> | import("react").ElementType} [icon]
+ */
+
+/**
+ * @param {PillIconProps} props
+ * @returns {import("react").JSX.Element}
+ */
 function PillIcon({ id }) {
   const iconProps = {
     viewBox: "0 0 24 24",
@@ -79,17 +127,25 @@ function PillIcon({ id }) {
   }
 }
 
-function CategoryPill({ id, label, className = "" }) {
+/**
+ * @param {CategoryPillProps} props
+ * @returns {import("react").JSX.Element}
+ */
+function CategoryPill({ id, label, className = "", children }) {
   return (
     <div
       className={`inline-flex items-center gap-1.5 rounded-2xl border px-3 py-1.5 text-[11px] font-medium shadow-sm backdrop-blur-md transition-transform duration-300 hover:scale-105 sm:gap-2 sm:px-3.5 sm:py-2 sm:text-xs ${PILL_TONES[id]} ${className}`}
     >
       <PillIcon id={id} />
-      <span className="whitespace-nowrap">{label}</span>
+      <span className="whitespace-nowrap">{label ?? children}</span>
     </div>
   );
 }
 
+/**
+ * @param {TaskDashboardCardProps} [props]
+ * @returns {import("react").JSX.Element}
+ */
 function TaskDashboardCard({ className = "" }) {
   return (
     <div className={`notiq-float-card rounded-2xl p-2.5 text-left sm:p-3.5 lg:p-4 ${className}`}>
@@ -121,6 +177,10 @@ function TaskDashboardCard({ className = "" }) {
   );
 }
 
+/**
+ * @param {LinkedKnowledgeCardProps} [props]
+ * @returns {import("react").JSX.Element}
+ */
 function LinkedKnowledgeCard({ className = "" }) {
   return (
     <div className={`notiq-float-card rounded-2xl p-4 text-left ${className}`}>
@@ -141,17 +201,25 @@ function LinkedKnowledgeCard({ className = "" }) {
   );
 }
 
-function MicroChip({ label, tone, className = "" }) {
+/**
+ * @param {MicroChipProps} props
+ * @returns {import("react").JSX.Element}
+ */
+function MicroChip({ label, tone = "", className = "", children, icon: Icon }) {
   return (
     <div
       aria-hidden="true"
       className={`notiq-float-card hidden h-9 w-9 items-center justify-center rounded-xl text-xs font-semibold ${tone} ${className}`}
     >
-      {label}
+      {Icon ? <Icon className="h-4 w-4" /> : (label ?? children)}
     </div>
   );
 }
 
+/**
+ * Hero Section
+ * @returns {import("react").JSX.Element}
+ */
 function Hero() {
   return (
     <section className="relative flex min-h-[600px] items-center justify-center overflow-hidden px-4 pt-28 pb-20 sm:min-h-[640px] sm:px-6 sm:pt-32 sm:pb-24 lg:min-h-screen lg:pt-28 lg:pb-20">

@@ -1,15 +1,21 @@
-import { render, screen } from "@testing-library/react";
+import React from "react";
+import { render, screen, type RenderResult } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "../components/layout/Navbar";
 import useThemeStore from "../store/useThemeStore";
 
-const EXPECTED_LINKS = [
+interface ExpectedLink {
+  name: string;
+  href: string;
+}
+
+const EXPECTED_LINKS: readonly ExpectedLink[] = [
   { name: "Home", href: "/" },
   { name: "Features", href: "/#features" },
   { name: "How It Works", href: "/#how-it-works" },
   { name: "Community Love", href: "/#testimonials" },
-];
+] as const;
 
 describe("Navbar component", () => {
   beforeEach(() => {
@@ -17,7 +23,7 @@ describe("Navbar component", () => {
     useThemeStore.getState().setTheme("light");
   });
 
-  const renderNavbar = (initialRoute = "/") =>
+  const renderNavbar = (initialRoute: string = "/"): RenderResult =>
     render(
       <MemoryRouter initialEntries={[initialRoute]}>
         <Navbar />
@@ -43,13 +49,13 @@ describe("Navbar component", () => {
 
   it("smoothly scrolls to Features, How It Works, and Community Love sections", async () => {
     const user = userEvent.setup();
-    const scrollIntoViewMock = jest.fn();
+    const scrollIntoViewMock = jest.fn<void, [ScrollIntoViewOptions | undefined]>();
 
-    const sectionIds = ["features", "how-it-works", "testimonials"];
+    const sectionIds: string[] = ["features", "how-it-works", "testimonials"];
     const createdSections = sectionIds.map((id) => {
       const el = document.createElement("section");
       el.id = id;
-      el.scrollIntoView = scrollIntoViewMock;
+      el.scrollIntoView = scrollIntoViewMock as unknown as typeof el.scrollIntoView;
       document.body.appendChild(el);
       return el;
     });

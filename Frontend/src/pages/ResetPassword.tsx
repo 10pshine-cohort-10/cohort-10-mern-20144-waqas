@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import React, { memo, useEffect, useState } from "react";
 import {
   FiAlertCircle,
   FiArrowLeft,
@@ -12,8 +12,11 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import type { AxiosError, AxiosResponse } from "axios";
 import logo from "../assets/logo.png";
-import AuthVisualCard from "../components/auth/AuthVisualCard";
+import AuthVisualCard, {
+  type AuthVisualHighlight,
+} from "../components/auth/AuthVisualCard";
 import Seo from "../components/common/Seo";
 import Footer from "../components/layout/Footer";
 import Navbar from "../components/layout/Navbar";
@@ -24,7 +27,26 @@ const MemoizedFooter = memo(Footer);
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/;
 
-const RESET_HIGHLIGHTS = [
+export type VerificationState = "checking" | "valid" | "invalid";
+
+export interface ResetPasswordFormValues {
+  password: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordFormErrors {
+  password?: string;
+  confirmPassword?: string;
+  [key: string]: string | undefined;
+}
+
+export interface ResetPasswordApiResponse {
+  statusCode?: number;
+  message?: string;
+  success?: boolean;
+}
+
+const RESET_HIGHLIGHTS: AuthVisualHighlight[] = [
   {
     icon: FiLock,
     title: "Strong Password Shield",
@@ -47,44 +69,47 @@ const RESET_HIGHLIGHTS = [
 
 /* Reset Password Page */
 
-function ResetPassword() {
+function ResetPassword(): React.JSX.Element {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token") || "";
 
-  const [verificationState, setVerificationState] = useState(() =>
-    token ? "checking" : "invalid",
+  const [verificationState, setVerificationState] = useState<VerificationState>(
+    () => (token ? "checking" : "invalid"),
   );
-  const [verificationError, setVerificationError] = useState(() =>
+  const [verificationError, setVerificationError] = useState<string>(() =>
     token ? "" : "Missing password reset token in the link.",
   );
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<ResetPasswordFormValues>({
     password: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ResetPasswordFormErrors>({});
+  const [serverError, setServerError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
     if (!token) return;
 
     let isMounted = true;
 
-    async function checkToken() {
+    async function checkToken(): Promise<void> {
       try {
-        await api.get(`/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
+        await api.get<{ message?: string }>(
+          `/auth/verify-reset-token?token=${encodeURIComponent(token)}`,
+        );
         if (isMounted) {
           setVerificationState("valid");
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (isMounted) {
           setVerificationState("invalid");
+          const axiosErr = err as AxiosError<{ message?: string }>;
           setVerificationError(
-            err.response?.data?.message ||
+            axiosErr.response?.data?.message ||
               "This password reset link is invalid or has expired.",
           );
         }
@@ -98,8 +123,8 @@ function ResetPassword() {
     };
   }, [token]);
 
-  const validateForm = () => {
-    const errs = {};
+  const validateForm = (): ResetPasswordFormErrors => {
+    const errs: ResetPasswordFormErrors = {};
     if (!formData.password) {
       errs.password = "New password is required.";
     } else if (formData.password.length < 8) {
@@ -118,7 +143,7 @@ function ResetPassword() {
     return errs;
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -129,7 +154,9 @@ function ResetPassword() {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
     setServerError("");
 
@@ -141,21 +168,27 @@ function ResetPassword() {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post("/auth/reset-password", {
-        token,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-      });
+      const response: AxiosResponse<ResetPasswordApiResponse> =
+        await api.post<ResetPasswordApiResponse>("/auth/reset-password", {
+          token,
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        });
 
       toast.success(
         response.data?.message ||
           "Password reset successfully! Please sign in with your new password.",
       );
       navigate("/login");
-    } catch (err) {
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{
+        message?: string;
+        errors?: Array<{ message?: string; field?: string }>;
+      }>;
       const message =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0]?.message ||
+        axiosErr.response?.data?.message ||
+        axiosErr.response?.data?.errors?.[0]?.message ||
+        (err instanceof Error ? err.message : null) ||
         "Failed to reset password. Please try again.";
       setServerError(message);
       toast.error(message);

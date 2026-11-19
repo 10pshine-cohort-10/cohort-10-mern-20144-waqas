@@ -1,6 +1,31 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 
+/**
+ * @typedef {Object} Testimonial
+ * @property {string} id
+ * @property {string} name
+ * @property {string} initials
+ * @property {string} avatar
+ * @property {string} review
+ * @property {string} accent
+ * @property {string} borderGlow
+ */
+
+/**
+ * @typedef {Object} ProfileAvatarProps
+ * @property {string} name
+ * @property {string} initials
+ * @property {string} avatar
+ * @property {string} accent
+ */
+
+/**
+ * @typedef {Object} TestimonialCardProps
+ * @property {Testimonial} item
+ */
+
+/** @type {Testimonial[]} */
 const TESTIMONIALS = [
   {
     id: "t1",
@@ -94,6 +119,10 @@ const TESTIMONIALS = [
   },
 ];
 
+/**
+ * @param {ProfileAvatarProps} props
+ * @returns {import("react").JSX.Element}
+ */
 function ProfileAvatar({ name, initials, avatar, accent }) {
   const [hasError, setHasError] = useState(false);
 
@@ -121,6 +150,10 @@ function ProfileAvatar({ name, initials, avatar, accent }) {
   );
 }
 
+/**
+ * @param {TestimonialCardProps} props
+ * @returns {import("react").JSX.Element}
+ */
 function TestimonialCard({ item }) {
   return (
     <article

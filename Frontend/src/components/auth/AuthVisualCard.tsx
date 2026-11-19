@@ -1,8 +1,23 @@
-import { memo } from "react";
+import React, { ElementType, memo } from "react";
 import { FiCheckCircle, FiShield, FiZap } from "react-icons/fi";
 import logo from "../../assets/logo.png";
 
-const DEFAULT_HIGHLIGHTS = [
+export interface AuthVisualHighlight {
+  icon: ElementType<{ className?: string; "aria-hidden"?: string | boolean }>;
+  title: string;
+  desc: string;
+  color: string;
+}
+
+export interface AuthVisualCardProps {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  highlights?: AuthVisualHighlight[];
+  className?: string;
+}
+
+const DEFAULT_HIGHLIGHTS: AuthVisualHighlight[] = [
   {
     icon: FiCheckCircle,
     title: "Smart Daily Notes",
@@ -29,7 +44,7 @@ function AuthVisualCard({
   subtitle = "Capture daily notes, manage tasks, set reminders, and build routines in one calm, vibrant workspace.",
   highlights = DEFAULT_HIGHLIGHTS,
   className = "",
-}) {
+}: AuthVisualCardProps): React.JSX.Element {
   return (
     <div
       className={`relative flex h-full flex-col justify-between overflow-hidden p-6 sm:p-7 lg:p-8 transform-gpu ${className}`}

@@ -32,13 +32,18 @@ function generateTokens(user) {
   }
 
   const accessToken = jwt.sign(
-    { id: user.id, username: user.username, email: user.email },
+    {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      tokenType: "access",
+    },
     jwtConfig.accessSecret,
     { expiresIn: jwtConfig.accessExpiry },
   );
 
   const refreshToken = jwt.sign(
-    { id: user.id },
+    { id: user.id, tokenType: "refresh" },
     jwtConfig.refreshSecret,
     { expiresIn: jwtConfig.refreshExpiry },
   );
@@ -327,6 +332,10 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     throw new ApiError(401, "Invalid or expired refresh token. Please log in again.");
   }
 
+  if (decoded?.tokenType !== "refresh") {
+    throw new ApiError(401, "Invalid refresh token");
+  }
+
   const result = await pool.query(
     "SELECT id, username, email, refresh_token_hash, created_at, updated_at FROM users WHERE id = $1 LIMIT 1",
     [decoded?.id],
@@ -392,7 +401,11 @@ export const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 export const requestPasswordReset = asyncHandler(async (req, res) => {
-  const origin = req.headers.origin || req.headers.referer;
+  const clientUrl = process.env.CLIENT_URL?.trim();
+  if (!clientUrl) {
+    throw new ApiError(500, "Client URL is not configured");
+  }
+
   const validation = validateForgotPasswordInput(req.body);
 
   if (!validation.valid) {
@@ -430,10 +443,7 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     [hashedToken, expiresAt, user.id],
   );
 
-  const clientBaseUrl =
-    process.env.CLIENT_URL ||
-    (origin && origin.startsWith("http") ? origin : "http://localhost:5173");
-  const resetUrl = `${clientBaseUrl.replace(/\/$/, "")}/reset-password?token=${rawToken}`;
+  const resetUrl = `${clientUrl.replace(/\/$/, "")}/reset-password?token=${rawToken}`;
 
   try {
     await sendPasswordResetEmail({

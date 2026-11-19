@@ -1,7 +1,10 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import FeaturesSection from "../components/home/FeaturesSection";
 
-const EXPECTED_FEATURES = [
+type ExpectedFeature = string;
+
+const EXPECTED_FEATURES: readonly ExpectedFeature[] = [
   "Daily Notes",
   "Tasks",
   "To-Do Lists",
@@ -12,7 +15,7 @@ const EXPECTED_FEATURES = [
   "Manage Notes",
   "Daily Routines",
   "Documents",
-];
+] as const;
 
 describe("FeaturesSection component", () => {
   it("renders the section heading, description, and all 10 features", () => {
@@ -29,4 +32,3 @@ describe("FeaturesSection component", () => {
     }
   });
 });
-

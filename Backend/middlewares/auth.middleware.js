@@ -27,6 +27,10 @@ export const verifyJWT = asyncHandler(async (req, _res, next) => {
     throw new ApiError(401, "Invalid or expired access token");
   }
 
+  if (decodedToken?.tokenType !== "access") {
+    throw new ApiError(401, "Invalid access token");
+  }
+
   const result = await pool.query(
     "SELECT id, username, email, created_at, updated_at FROM users WHERE id = $1 LIMIT 1",
     [decodedToken?.id],

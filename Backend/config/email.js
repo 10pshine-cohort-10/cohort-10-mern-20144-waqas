@@ -1,6 +1,30 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger.js";
 
+/**
+ * Type contract for input parameters accepted by sendPasswordResetEmail.
+ * @typedef {Object} PasswordResetEmailInput
+ * @property {string} to - Recipient email address.
+ * @property {string} resetUrl - Single-use password reset link.
+ * @property {string} [username] - Optional username of the recipient.
+ */
+
+/**
+ * Type contract for the asynchronous delivery result of an email dispatch.
+ * @typedef {Object} EmailDeliveryResult
+ * @property {string} messageId - Unique message identifier returned by the SMTP server.
+ * @property {string[]} [accepted] - Array of recipient email addresses accepted by SMTP transport.
+ * @property {string[]} [rejected] - Array of recipient email addresses rejected by SMTP transport.
+ * @property {string} [response] - Final status response string from the SMTP transport.
+ * @property {Object} [envelope] - Message envelope metadata.
+ */
+
+/**
+ * Creates and configures the Nodemailer SMTP transporter.
+ * Enforces implicit TLS for port 465 and requires STARTTLS for all non-465 ports.
+ *
+ * @returns {import("nodemailer").Transporter}
+ */
 const createTransporter = () => {
   const host = process.env.EMAIL_HOST || "smtp.gmail.com";
   const port = parseInt(process.env.EMAIL_PORT, 10) || 587;
@@ -15,6 +39,7 @@ const createTransporter = () => {
     host,
     port,
     secure: port === 465,
+    requireTLS: port !== 465,
     auth: {
       user,
       pass,
@@ -22,8 +47,18 @@ const createTransporter = () => {
   });
 };
 
+/**
+ * Checked type contract for the exported Nodemailer transporter instance.
+ * @type {import("nodemailer").Transporter}
+ */
 export const transporter = createTransporter();
 
+/**
+ * Sends a password reset email to the specified user.
+ *
+ * @param {PasswordResetEmailInput} input - Parameters for password reset dispatch.
+ * @returns {Promise<EmailDeliveryResult>} Delivery result containing messageId and SMTP details.
+ */
 export const sendPasswordResetEmail = async ({ to, resetUrl, username }) => {
   const mailOptions = {
     from: `"Notiq Support" <${process.env.EMAIL_USER || "no-reply@notiq.app"}>`,

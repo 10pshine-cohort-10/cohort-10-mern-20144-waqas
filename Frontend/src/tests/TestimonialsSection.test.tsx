@@ -1,7 +1,8 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import TestimonialsSection from "../components/home/TestimonialsSection";
 
-const EXPECTED_NAMES = [
+const EXPECTED_NAMES: readonly string[] = [
   "Maya Patel",
   "Liam Brooks",
   "Sofia Alvarez",
@@ -11,7 +12,7 @@ const EXPECTED_NAMES = [
   "Hannah Chen",
   "Lucas Meyer",
   "Amara Singh",
-];
+] as const;
 
 describe("TestimonialsSection component", () => {
   it("renders the section heading and all 9 user testimonials", () => {
@@ -26,4 +27,3 @@ describe("TestimonialsSection component", () => {
     }
   });
 });
-

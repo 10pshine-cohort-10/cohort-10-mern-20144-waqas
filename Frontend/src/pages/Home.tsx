@@ -1,3 +1,4 @@
+import React from "react";
 import { MotionConfig } from "framer-motion";
 import Seo from "../components/common/Seo";
 import FeatureShowcase from "../components/home/FeatureShowcase";
@@ -31,7 +32,7 @@ const HOME_STRUCTURED_DATA = {
   ],
 };
 
-function Home() {
+function Home(): React.JSX.Element {
   return (
     <MotionConfig reducedMotion="user">
       <Seo

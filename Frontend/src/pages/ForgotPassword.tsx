@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import React, { memo, useState } from "react";
 import {
   FiAlertCircle,
   FiArrowLeft,
@@ -11,8 +11,11 @@ import {
 } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import type { AxiosError, AxiosResponse } from "axios";
 import logo from "../assets/logo.png";
-import AuthVisualCard from "../components/auth/AuthVisualCard";
+import AuthVisualCard, {
+  type AuthVisualHighlight,
+} from "../components/auth/AuthVisualCard";
 import Seo from "../components/common/Seo";
 import Footer from "../components/layout/Footer";
 import Navbar from "../components/layout/Navbar";
@@ -22,7 +25,13 @@ const MemoizedFooter = memo(Footer);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const FORGOT_HIGHLIGHTS = [
+export interface ForgotPasswordApiResponse {
+  statusCode?: number;
+  message?: string;
+  success?: boolean;
+}
+
+const FORGOT_HIGHLIGHTS: AuthVisualHighlight[] = [
   {
     icon: FiMail,
     title: "Secure Email Dispatch",
@@ -45,14 +54,14 @@ const FORGOT_HIGHLIGHTS = [
 
 /* Forgot Password Page */
 
-function ForgotPassword() {
-  const [email, setEmail] = useState("");
-  const [error, setError] = useState("");
-  const [serverError, setServerError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+function ForgotPassword(): React.JSX.Element {
+  const [email, setEmail] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [serverError, setServerError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
-  const validate = (value) => {
+  const validate = (value: string): string => {
     const trimmed = (value || "").trim();
     if (!trimmed) {
       return "Email address is required.";
@@ -63,13 +72,15 @@ function ForgotPassword() {
     return "";
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setEmail(e.target.value);
     if (error) setError("");
     if (serverError) setServerError("");
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     e.preventDefault();
     setServerError("");
 
@@ -81,19 +92,25 @@ function ForgotPassword() {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post("/auth/forgot-password", {
-        email: email.trim().toLowerCase(),
-      });
+      const response: AxiosResponse<ForgotPasswordApiResponse> =
+        await api.post<ForgotPasswordApiResponse>("/auth/forgot-password", {
+          email: email.trim().toLowerCase(),
+        });
 
       setIsSubmitted(true);
       toast.success(
         response.data?.message ||
           "Password reset link sent! Please check your email inbox.",
       );
-    } catch (err) {
+    } catch (err: unknown) {
+      const axiosErr = err as AxiosError<{
+        message?: string;
+        errors?: Array<{ message?: string; field?: string }>;
+      }>;
       const message =
-        err.response?.data?.message ||
-        err.response?.data?.errors?.[0]?.message ||
+        axiosErr.response?.data?.message ||
+        axiosErr.response?.data?.errors?.[0]?.message ||
+        (err instanceof Error ? err.message : null) ||
         "Failed to send reset link. Please verify your email and try again.";
       setServerError(message);
       toast.error(message);
@@ -102,7 +119,7 @@ function ForgotPassword() {
     }
   };
 
-  const handleResetAgain = () => {
+  const handleResetAgain = (): void => {
     setIsSubmitted(false);
     setServerError("");
     setError("");

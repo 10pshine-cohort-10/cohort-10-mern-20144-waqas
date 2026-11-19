@@ -1,7 +1,8 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import HowItWorksSection from "../components/home/HowItWorksSection";
 
-const EXPECTED_STEPS = [
+const EXPECTED_STEPS: readonly string[] = [
   "Visit the Landing Page",
   "Create Your Account / Login",
   "Access Your Dashboard",
@@ -10,7 +11,7 @@ const EXPECTED_STEPS = [
   "Manage Your Tasks & To-Dos",
   "Set Reminders & Routines",
   "Stay Organized",
-];
+] as const;
 
 describe("HowItWorksSection component", () => {
   it("renders the How It Works heading and all 8 workflow steps", () => {
@@ -27,4 +28,3 @@ describe("HowItWorksSection component", () => {
     }
   });
 });
-

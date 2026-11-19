@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import FeatureShowcase from "../components/home/FeatureShowcase";
 
@@ -17,4 +18,3 @@ describe("FeatureShowcase component", () => {
     expect(screen.getByText("Daily Notes")).toBeInTheDocument();
   });
 });
-

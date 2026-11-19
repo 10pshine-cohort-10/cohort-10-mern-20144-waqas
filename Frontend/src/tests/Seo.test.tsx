@@ -1,3 +1,4 @@
+import React from "react";
 import { render } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import About from "../pages/About";

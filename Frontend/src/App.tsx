@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,9 +12,9 @@ import Login from "./pages/Login";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Register from "./pages/Register";
 import ResetPassword from "./pages/ResetPassword";
-import useThemeStore from "./store/useThemeStore";
+import useThemeStore, { type ThemeState } from "./store/useThemeStore";
 
-function ScrollToTop() {
+function ScrollToTop(): null {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
@@ -30,8 +30,8 @@ function ScrollToTop() {
   return null;
 }
 
-function App() {
-  const theme = useThemeStore((state) => state.theme);
+function App(): React.JSX.Element {
+  const theme = useThemeStore((state: ThemeState) => state.theme);
 
   return (
     <>

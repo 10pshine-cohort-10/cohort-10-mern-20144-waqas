@@ -1,3 +1,4 @@
+import React from "react";
 import { motion, MotionConfig } from "framer-motion";
 import {
   FiArrowRight,
@@ -19,7 +20,14 @@ import PageHero from "../components/layout/PageHero";
 
 /* About Page */
 
-const SERVICES = [
+interface ServiceItem {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  accent: string;
+}
+
+const SERVICES: ServiceItem[] = [
   {
     title: "Web Applications",
     description:
@@ -86,7 +94,7 @@ const ABOUT_STRUCTURED_DATA = {
   },
 };
 
-function About() {
+function About(): React.JSX.Element {
   return (
     <MotionConfig reducedMotion="user">
       <Seo
@@ -293,4 +301,3 @@ function About() {
 }
 
 export default About;
-

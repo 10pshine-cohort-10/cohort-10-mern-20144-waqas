@@ -6,6 +6,10 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL is not set in environment variables");
 }
 
+/**
+ * PostgreSQL connection pool instance derived from the pg driver.
+ * @type {import("pg").Pool}
+ */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
@@ -34,10 +38,20 @@ const USERS_SCHEMA_SQL = `
     ADD COLUMN IF NOT EXISTS reset_password_expires TIMESTAMPTZ;
 `;
 
+/**
+ * Initializes the database schema by executing table and index creation statements.
+ *
+ * @returns {Promise<void>} Resolves when schema initialization query completes.
+ */
 const initDB = async () => {
   await pool.query(USERS_SCHEMA_SQL);
 };
 
+/**
+ * Connects to PostgreSQL, checks connectivity, and validates user schema.
+ *
+ * @returns {Promise<void>} Resolves once connectivity is confirmed and schema verified.
+ */
 const connectDB = async () => {
   const client = await pool.connect();
   try {

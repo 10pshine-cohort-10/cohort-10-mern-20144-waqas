@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import About from "../pages/About";
@@ -74,7 +75,7 @@ describe("Company Info Pages", () => {
 
     expect(screen.getByText(/Last Updated: November 12, 2026/i)).toBeInTheDocument();
 
-    const expectedHeadings = [
+    const expectedHeadings: readonly string[] = [
       "1. Introduction",
       "2. Information Collection and Usage",
       "3. Account Security",
@@ -94,4 +95,3 @@ describe("Company Info Pages", () => {
     }
   });
 });
-

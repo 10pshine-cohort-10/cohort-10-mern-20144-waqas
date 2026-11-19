@@ -437,4 +437,66 @@ describe("Frontend Authentication Pages & Validations", () => {
       expect(mockNavigate).not.toHaveBeenCalled();
     });
   });
+
+  describe("3. Authentication Persistence & Fallback", () => {
+    test("preserves active session in memory when localStorage writes fail", () => {
+      const setItemSpy = jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new DOMException("QuotaExceededError");
+      });
+
+      const testUser = {
+        id: "u-123",
+        username: "storage_fail_user",
+        email: "storage_fail@example.com",
+      };
+
+      useAuthStore.getState().setUser(testUser);
+
+      expect(useAuthStore.getState().user).toEqual(testUser);
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+
+      // Session must NOT be expired immediately despite localStorage write failure
+      expect(useAuthStore.getState().isSessionExpired()).toBe(false);
+
+      setItemSpy.mockRestore();
+    });
+
+    test("session remains valid across in-memory activity updates when localStorage is unavailable", () => {
+      const setItemSpy = jest.spyOn(Storage.prototype, "setItem").mockImplementation(() => {
+        throw new DOMException("QuotaExceededError");
+      });
+
+      const testUser = {
+        id: "u-456",
+        username: "active_user",
+        email: "active@example.com",
+      };
+
+      useAuthStore.getState().setUser(testUser);
+      useAuthStore.getState().updateActivity();
+
+      expect(useAuthStore.getState().isSessionExpired()).toBe(false);
+
+      setItemSpy.mockRestore();
+    });
+
+    test("clears both in-memory and persisted credentials on clearAuth", () => {
+      const testUser = {
+        id: "u-789",
+        username: "cleared_user",
+        email: "cleared@example.com",
+      };
+
+      useAuthStore.getState().setUser(testUser);
+      expect(useAuthStore.getState().isAuthenticated).toBe(true);
+
+      useAuthStore.getState().clearAuth();
+
+      expect(useAuthStore.getState().user).toBeNull();
+      expect(useAuthStore.getState().isAuthenticated).toBe(false);
+      expect(useAuthStore.getState().isSessionExpired()).toBe(true);
+      expect(localStorage.getItem("notiq_user")).toBeNull();
+      expect(localStorage.getItem("notiq_last_active")).toBeNull();
+    });
+  });
 });

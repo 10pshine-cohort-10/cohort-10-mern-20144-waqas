@@ -1,6 +1,26 @@
+import React from "react";
 import { motion } from "framer-motion";
 
-const FEATURES = [
+export type FeatureId =
+  | "daily-notes"
+  | "tasks"
+  | "todo-lists"
+  | "reminders"
+  | "labels"
+  | "archived"
+  | "starred"
+  | "manage-notes"
+  | "daily-routines"
+  | "documents";
+
+export interface FeatureItem {
+  id: FeatureId;
+  title: string;
+  description: string;
+  gradient: string;
+}
+
+const FEATURES: FeatureItem[] = [
   {
     id: "daily-notes",
     title: "Daily Notes",
@@ -63,14 +83,18 @@ const FEATURES = [
   },
 ];
 
-function FeatureItemIcon({ id }) {
+export interface FeatureItemIconProps {
+  id: FeatureId;
+}
+
+function FeatureItemIcon({ id }: FeatureItemIconProps): React.JSX.Element {
   const props = {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
     strokeWidth: "1.9",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
     className: "h-4 w-4 text-white",
     "aria-hidden": "true",
   };
@@ -149,7 +173,22 @@ function FeatureItemIcon({ id }) {
   }
 }
 
-const STACKED_CARDS = [
+export type StackedCardId =
+  | "card-daily"
+  | "card-tasks"
+  | "card-labels"
+  | "card-docs";
+
+export interface StackedCardItem {
+  id: StackedCardId;
+  position: string;
+  rotate: number;
+  floatDuration: number;
+  delay: number;
+  glowShadow: string;
+}
+
+const STACKED_CARDS: StackedCardItem[] = [
   {
     id: "card-daily",
     position: "top-2 left-0 z-10 w-[70%]",
@@ -184,7 +223,7 @@ const STACKED_CARDS = [
   },
 ];
 
-function renderStackedCardContent(id) {
+function renderStackedCardContent(id: StackedCardId): React.JSX.Element {
   switch (id) {
     case "card-daily":
       return (
@@ -265,7 +304,7 @@ function renderStackedCardContent(id) {
   }
 }
 
-function StackedCards() {
+function StackedCards(): React.JSX.Element {
   return (
     <div
       aria-hidden="true"
@@ -307,8 +346,7 @@ function StackedCards() {
   );
 }
 
-/* Features Section */
-function FeaturesSection() {
+function FeaturesSection(): React.JSX.Element {
   return (
     <section
       id="features"

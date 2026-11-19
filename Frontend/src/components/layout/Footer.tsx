@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "framer-motion";
 import {
   FiArrowUp,
@@ -15,14 +16,43 @@ import {
 import { Link, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 
-const QUICK_LINKS = [
+interface QuickLinkItem {
+  label: string;
+  to: string;
+  sectionId: string | null;
+}
+
+interface CompanyLinkItem {
+  label: string;
+  to: string;
+}
+
+interface ContactItem {
+  id: string;
+  label: string;
+  value: string;
+  href: string | null;
+  icon: React.ElementType;
+  iconBg: string;
+}
+
+interface SocialLinkItem {
+  name: string;
+  href: string;
+  icon: React.ElementType;
+  gradient: string;
+  iconColor: string;
+  hoverGlow: string;
+}
+
+const QUICK_LINKS: QuickLinkItem[] = [
   { label: "Home", to: "/", sectionId: null },
   { label: "Features", to: "/#features", sectionId: "features" },
   { label: "How It Works", to: "/#how-it-works", sectionId: "how-it-works" },
   { label: "Community Love", to: "/#testimonials", sectionId: "testimonials" },
 ];
 
-const COMPANY_LINKS = [
+const COMPANY_LINKS: CompanyLinkItem[] = [
   { label: "About", to: "/about" },
   { label: "Contact", to: "/contact" },
   { label: "Privacy Policy", to: "/privacy-policy" },
@@ -30,7 +60,7 @@ const COMPANY_LINKS = [
   { label: "Register", to: "/register" },
 ];
 
-const CONTACT_ITEMS = [
+const CONTACT_ITEMS: ContactItem[] = [
   {
     id: "phone",
     label: "Phone",
@@ -57,7 +87,7 @@ const CONTACT_ITEMS = [
   },
 ];
 
-const SOCIAL_LINKS = [
+const SOCIAL_LINKS: SocialLinkItem[] = [
   {
     name: "Instagram",
     href: "https://www.instagram.com/waqas_tariq77?cplk=MWoyNTZmc203NjhyYQ%3D%3D&utm_source=qr",
@@ -115,10 +145,13 @@ const columnVariants = {
 };
 
 /* Footer Section */
-function Footer() {
+function Footer(): React.JSX.Element {
   const location = useLocation();
 
-  const handleSectionScroll = (event, item) => {
+  const handleSectionScroll = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    item: { to: string; sectionId: string | null },
+  ): void => {
     if (item.sectionId && location.pathname === "/") {
       const target = document.getElementById(item.sectionId);
       if (target) {
@@ -135,7 +168,7 @@ function Footer() {
     }
   };
 
-  const handleBackToTop = () => {
+  const handleBackToTop = (): void => {
     window.scrollTo?.({ top: 0, behavior: "smooth" });
   };
 

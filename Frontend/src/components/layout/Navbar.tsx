@@ -1,17 +1,24 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import useThemeStore from "../../store/useThemeStore";
 
-const NAV_LINKS = [
+export interface NavItem {
+  label: string;
+  to: string;
+  sectionId?: string;
+  dropdown?: Array<{ label: string; to: string }>;
+}
+
+const NAV_LINKS: NavItem[] = [
   { label: "Home", to: "/" },
   { label: "Features", to: "/#features", sectionId: "features" },
   { label: "How It Works", to: "/#how-it-works", sectionId: "how-it-works" },
   { label: "Community Love", to: "/#testimonials", sectionId: "testimonials" },
 ];
 
-const getNavLinkClass = (isActive, isMobile = false) => {
+const getNavLinkClass = (isActive: boolean, isMobile: boolean = false): string => {
   const layout = isMobile
     ? "flex w-full items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200"
     : "relative rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-all duration-200";
@@ -23,7 +30,11 @@ const getNavLinkClass = (isActive, isMobile = false) => {
   return `${layout} ${state}`;
 };
 
-function ThemeIcon({ isDark }) {
+interface ThemeIconProps {
+  isDark: boolean;
+}
+
+function ThemeIcon({ isDark }: ThemeIconProps): React.JSX.Element {
   if (isDark) {
     return (
       <svg
@@ -65,7 +76,11 @@ function ThemeIcon({ isDark }) {
   );
 }
 
-function MenuIcon({ isOpen }) {
+interface MenuIconProps {
+  isOpen: boolean;
+}
+
+function MenuIcon({ isOpen }: MenuIconProps): React.JSX.Element {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -94,17 +109,17 @@ function MenuIcon({ isOpen }) {
 }
 
 /* Navigation Bar */
-function Navbar() {
+function Navbar(): React.JSX.Element {
   const theme = useThemeStore((state) => state.theme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navRef = useRef(null);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const navRef = useRef<HTMLElement>(null);
   const location = useLocation();
 
   const isDark = theme === "dark";
-  const closeMenu = () => setIsMenuOpen(false);
+  const closeMenu = (): void => setIsMenuOpen(false);
 
-  const isLinkActive = (link, routeActive) => {
+  const isLinkActive = (link: NavItem, routeActive: boolean): boolean => {
     if (link.sectionId) {
       return location.pathname === "/" && location.hash === `#${link.sectionId}`;
     }
@@ -114,7 +129,10 @@ function Navbar() {
     return routeActive;
   };
 
-  const handleLinkClick = (event, link) => {
+  const handleLinkClick = (
+    event: React.MouseEvent<HTMLAnchorElement>,
+    link: NavItem,
+  ): void => {
     closeMenu();
 
     if (link.sectionId && location.pathname === "/") {
@@ -135,14 +153,14 @@ function Navbar() {
   useEffect(() => {
     if (!isMenuOpen) return undefined;
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
       }
     };
 
-    const handlePointerDown = (event) => {
-      if (navRef.current && !navRef.current.contains(event.target)) {
+    const handlePointerDown = (event: MouseEvent): void => {
+      if (navRef.current && !navRef.current.contains(event.target as Node)) {
         setIsMenuOpen(false);
       }
     };

@@ -1,3 +1,4 @@
+import React from "react";
 import { motion, MotionConfig } from "framer-motion";
 import { FiCalendar, FiShield } from "react-icons/fi";
 import Seo from "../components/common/Seo";
@@ -7,9 +8,15 @@ import PageHero from "../components/layout/PageHero";
 
 /* Privacy Policy Page */
 
+interface PolicySectionItem {
+  id: string;
+  title: string;
+  body: string;
+}
+
 const LAST_UPDATED = "November 12, 2026";
 
-const POLICY_SECTIONS = [
+const POLICY_SECTIONS: PolicySectionItem[] = [
   {
     id: "introduction",
     title: "1. Introduction",
@@ -81,7 +88,7 @@ const PRIVACY_STRUCTURED_DATA = {
   dateModified: "2026-11-12",
 };
 
-function PrivacyPolicy() {
+function PrivacyPolicy(): React.JSX.Element {
   return (
     <MotionConfig reducedMotion="user">
       <Seo
@@ -151,4 +158,3 @@ function PrivacyPolicy() {
 }
 
 export default PrivacyPolicy;
-

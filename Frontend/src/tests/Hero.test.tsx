@@ -1,9 +1,10 @@
-import { render, screen } from "@testing-library/react";
+import React from "react";
+import { render, screen, type RenderResult } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Hero from "../components/home/Hero";
 
 describe("Hero component", () => {
-  const renderHero = () =>
+  const renderHero = (): RenderResult =>
     render(
       <MemoryRouter>
         <Hero />

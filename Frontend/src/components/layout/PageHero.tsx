@@ -1,6 +1,19 @@
+import React from "react";
 import { motion } from "framer-motion";
 
-function PageHero({ eyebrow, icon: Icon, title, description }) {
+export interface PageHeroProps {
+  eyebrow?: string;
+  icon?: React.ElementType;
+  title: React.ReactNode;
+  description?: React.ReactNode;
+}
+
+function PageHero({
+  eyebrow,
+  icon: Icon,
+  title,
+  description,
+}: PageHeroProps): React.JSX.Element {
   return (
     <section className="relative overflow-hidden pt-28 pb-16 sm:pt-36 sm:pb-24">
       <div
@@ -114,4 +127,3 @@ function PageHero({ eyebrow, icon: Icon, title, description }) {
 }
 
 export default PageHero;
-

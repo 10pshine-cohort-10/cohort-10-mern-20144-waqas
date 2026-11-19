@@ -1,4 +1,4 @@
-import { logger } from "../config/logger.js";
+import { logger, sanitizeUrl } from "../config/logger.js";
 
 export class ApiError extends Error {
   constructor(statusCode, message = "Something went wrong", errors = []) {
@@ -15,35 +15,60 @@ export const asyncHandler = (fn) => (req, res, next) => {
 };
 
 export function notFoundHandler(req, _res, next) {
-  next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
+  const safeUrl = sanitizeUrl(req.originalUrl || req.url || "");
+  next(new ApiError(404, `Route not found: ${req.method} ${safeUrl}`));
 }
 
 export function errorHandler(err, req, res, _next) {
-  let statusCode = err?.statusCode || 500;
-  let message = err?.message || "Something went wrong";
-  const errors = Array.isArray(err?.errors) ? err.errors : [];
+  const isProduction = process.env.NODE_ENV === "production";
+  const isApiError = err instanceof ApiError;
 
-  if (err?.type === "entity.parse.failed" || (err instanceof SyntaxError && "body" in err)) {
+  let statusCode = 500;
+  let message = "Internal server error";
+  let errors = [];
+
+  if (isApiError) {
+    statusCode = err.statusCode || 400;
+    message = err.message || "Something went wrong";
+    errors = Array.isArray(err.errors) ? err.errors : [];
+  } else if (err?.type === "entity.parse.failed" || (err instanceof SyntaxError && "body" in err)) {
     statusCode = 400;
     message = "Invalid JSON payload";
-  } else if (message === "Not allowed by CORS") {
+  } else if (err?.message === "Not allowed by CORS") {
     statusCode = 403;
+    message = "Not allowed by CORS";
   } else if (err?.code === "23505") {
     statusCode = 409;
     message = "A record with this value already exists";
   } else if (err?.code === "ECONNREFUSED" || err?.code === "57P01") {
     statusCode = 503;
     message = "Database service is temporarily unavailable";
+  } else {
+    // Non-ApiError fallback
+    statusCode =
+      typeof err?.statusCode === "number" && err.statusCode >= 400 && err.statusCode < 600
+        ? err.statusCode
+        : 500;
+
+    if (statusCode >= 500) {
+      message = "Internal server error";
+    } else {
+      message = isProduction ? "Request could not be processed" : (err?.message || "Something went wrong");
+    }
   }
+
+  const rawUrl = req?.originalUrl || req?.url || "";
+  const safeUrl = sanitizeUrl(rawUrl);
 
   logger.error(
     {
+      err,
       method: req?.method,
-      url: req?.originalUrl,
+      url: safeUrl,
       statusCode,
       errCode: err?.code,
     },
-    message,
+    err?.message || message,
   );
 
   return res.status(statusCode).json({

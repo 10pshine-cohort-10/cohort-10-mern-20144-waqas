@@ -1,3 +1,4 @@
+import React from "react";
 import { motion, MotionConfig } from "framer-motion";
 import { FaWhatsapp } from "react-icons/fa6";
 import {
@@ -14,7 +15,18 @@ import PageHero from "../components/layout/PageHero";
 
 /* Contact Page */
 
-const CONTACT_CARDS = [
+interface ContactCardItem {
+  id: string;
+  label: string;
+  value: string;
+  helper: string;
+  href: string | null;
+  icon: React.ElementType;
+  accent: string;
+  glow: string;
+}
+
+const CONTACT_CARDS: ContactCardItem[] = [
   {
     id: "phone",
     label: "Phone",
@@ -66,7 +78,7 @@ const CONTACT_STRUCTURED_DATA = {
   },
 };
 
-function Contact() {
+function Contact(): React.JSX.Element {
   return (
     <MotionConfig reducedMotion="user">
       <Seo
@@ -204,4 +216,3 @@ function Contact() {
 }
 
 export default Contact;
-

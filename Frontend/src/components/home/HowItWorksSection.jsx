@@ -1,6 +1,25 @@
 import { motion } from "framer-motion";
 import howItWorksBg from "../../assets/how-it-works-bg.jpg";
 
+/**
+ * @typedef {"visit" | "account" | "dashboard" | "create-notes" | "organize-notes" | "tasks-todos" | "reminders" | "stay-organized"} StepId
+ */
+
+/**
+ * @typedef {Object} WorkflowStep
+ * @property {string} number
+ * @property {StepId} id
+ * @property {string} title
+ * @property {string} description
+ * @property {string} gradient
+ */
+
+/**
+ * @typedef {Object} StepIconProps
+ * @property {StepId} id
+ */
+
+/** @type {WorkflowStep[]} */
 const STEPS = [
   {
     number: "01",
@@ -66,6 +85,10 @@ const STEPS = [
   },
 ];
 
+/**
+ * @param {StepIconProps} props
+ * @returns {import("react").JSX.Element}
+ */
 function StepIcon({ id }) {
   const props = {
     viewBox: "0 0 24 24",
@@ -142,7 +165,10 @@ function StepIcon({ id }) {
   }
 }
 
-/* How It Works Section */
+/**
+ * How It Works Section
+ * @returns {import("react").JSX.Element}
+ */
 function HowItWorksSection() {
   return (
     <section

@@ -5,10 +5,28 @@ const SITE_NAME = "Notiq";
 const DEFAULT_IMAGE = "/favicon.png";
 const DEFAULT_IMAGE_ALT = "Notiq workspace logo";
 
-function upsertMetaTag(attributeName, attributeValue, content) {
+export type JsonLdRecord = Record<string, unknown>;
+export type JsonLdValue = JsonLdRecord | JsonLdRecord[] | null;
+
+export interface SeoProps {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  type?: string;
+  robots?: string;
+  image?: string;
+  imageAlt?: string;
+  structuredData?: JsonLdValue;
+}
+
+function upsertMetaTag(
+  attributeName: "name" | "property" | string,
+  attributeValue: string,
+  content?: string,
+): void {
   if (!content) return;
 
-  let element = document.head.querySelector(
+  let element = document.head.querySelector<HTMLMetaElement>(
     `meta[${attributeName}="${attributeValue}"]`,
   );
 
@@ -21,10 +39,12 @@ function upsertMetaTag(attributeName, attributeValue, content) {
   element.setAttribute("content", content);
 }
 
-function upsertCanonicalLink(href) {
+function upsertCanonicalLink(href?: string): void {
   if (!href) return;
 
-  let link = document.head.querySelector('link[rel="canonical"]');
+  let link = document.head.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]',
+  );
   if (!link) {
     link = document.createElement("link");
     link.setAttribute("rel", "canonical");
@@ -34,8 +54,8 @@ function upsertCanonicalLink(href) {
   link.setAttribute("href", href);
 }
 
-function upsertJsonLd(structuredData) {
-  const existing = document.head.querySelector(
+function upsertJsonLd(structuredData?: JsonLdValue): void {
+  const existing = document.head.querySelector<HTMLScriptElement>(
     'script[type="application/ld+json"][data-seo-jsonld="true"]',
   );
 
@@ -63,7 +83,7 @@ function Seo({
   image = DEFAULT_IMAGE,
   imageAlt = DEFAULT_IMAGE_ALT,
   structuredData = null,
-}) {
+}: SeoProps): null {
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -77,7 +97,8 @@ function Seo({
         ? window.location.origin
         : "";
     const canonicalHref = origin ? `${origin}${pathname}` : pathname;
-    const absoluteImage = origin && image.startsWith("/") ? `${origin}${image}` : image;
+    const absoluteImage =
+      origin && image.startsWith("/") ? `${origin}${image}` : image;
 
     upsertMetaTag("name", "description", description);
     upsertMetaTag("name", "keywords", keywords);
@@ -115,4 +136,3 @@ function Seo({
 }
 
 export default Seo;
-

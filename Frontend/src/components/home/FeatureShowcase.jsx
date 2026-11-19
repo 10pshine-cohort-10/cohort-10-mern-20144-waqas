@@ -1,5 +1,24 @@
 import { motion } from "framer-motion";
 
+/**
+ * @typedef {"notes" | "tasks" | "docs" | "daily-notes"} FeatureShowcaseId
+ */
+
+/**
+ * @typedef {Object} FeatureShowcaseItem
+ * @property {FeatureShowcaseId} id
+ * @property {string} label
+ * @property {string} gradient
+ * @property {string} glow
+ * @property {string} accentBar
+ */
+
+/**
+ * @typedef {Object} FeatureIconProps
+ * @property {FeatureShowcaseId} id
+ */
+
+/** @type {FeatureShowcaseItem[]} */
 const FEATURES = [
   {
     id: "notes",
@@ -31,6 +50,10 @@ const FEATURES = [
   },
 ];
 
+/**
+ * @param {FeatureIconProps} props
+ * @returns {import("react").JSX.Element}
+ */
 function FeatureIcon({ id }) {
   const iconProps = {
     viewBox: "0 0 24 24",

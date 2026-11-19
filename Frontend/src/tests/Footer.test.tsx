@@ -1,3 +1,4 @@
+import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Footer from "../components/layout/Footer";
@@ -78,8 +79,8 @@ describe("Footer", () => {
   });
 
   test("smoothly scrolls to top when Back to Top is clicked", () => {
-    const scrollToSpy = jest.fn();
-    window.scrollTo = scrollToSpy;
+    const scrollToSpy = jest.fn<void, [ScrollToOptions | undefined]>();
+    window.scrollTo = scrollToSpy as unknown as typeof window.scrollTo;
 
     render(
       <MemoryRouter initialEntries={["/"]}>
@@ -91,4 +92,3 @@ describe("Footer", () => {
     expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 });
-

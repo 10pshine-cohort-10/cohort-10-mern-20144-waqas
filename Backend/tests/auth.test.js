@@ -13,6 +13,55 @@ const PRIMARY_USER = {
   confirmPassword: "StrongPass!2026",
 };
 
+/**
+ * Validates that DATABASE_URL explicitly targets a dedicated test database
+ * to prevent destructive cleanup queries from running against development or production databases.
+ */
+export function assertTestDatabase() {
+  const dbUrl = process.env.DATABASE_URL;
+  if (!dbUrl) {
+    throw new Error(
+      "Test database isolation failure: DATABASE_URL environment variable is not configured.",
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = new URL(dbUrl);
+  } catch (err) {
+    throw new Error(
+      `Test database isolation failure: Invalid DATABASE_URL format: ${err.message}`,
+    );
+  }
+
+  const dbName = decodeURIComponent(
+    parsed.pathname.replace(/^\//, "").split("?")[0] || "",
+  );
+
+  if (!dbName) {
+    throw new Error(
+      "Test database isolation failure: No database name specified in DATABASE_URL.",
+    );
+  }
+
+  const isDedicatedTestUrl = Boolean(
+    process.env.TEST_DATABASE_URL && dbUrl === process.env.TEST_DATABASE_URL,
+  );
+
+  const isTestDbName =
+    dbName === "test" ||
+    dbName.endsWith("_test") ||
+    dbName.endsWith("-test") ||
+    dbName.endsWith("_testing") ||
+    dbName.startsWith("test_");
+
+  if (!isDedicatedTestUrl && !isTestDbName) {
+    throw new Error(
+      `Test database isolation failure: Connected database "${dbName}" is not identified as a dedicated test database. Destructive test cleanup aborted to protect non-test data.`,
+    );
+  }
+}
+
 describe("Authentication & Database Integration Tests", function () {
   this.timeout(30000);
 
@@ -20,16 +69,20 @@ describe("Authentication & Database Integration Tests", function () {
   let refreshToken = "";
 
   before(async () => {
+    assertTestDatabase();
     await initDB();
-    await pool.query("DELETE FROM users WHERE username LIKE $1", [
-      "mocha_test_%",
-    ]);
+    await pool.query(
+      "DELETE FROM users WHERE username LIKE $1 ESCAPE '\\'",
+      ["mocha\\_test\\_%"],
+    );
   });
 
   after(async () => {
-    await pool.query("DELETE FROM users WHERE username LIKE $1", [
-      "mocha_test_%",
-    ]);
+    assertTestDatabase();
+    await pool.query(
+      "DELETE FROM users WHERE username LIKE $1 ESCAPE '\\'",
+      ["mocha\\_test\\_%"],
+    );
   });
 
   describe("1. Database Connectivity & Security Headers", () => {
