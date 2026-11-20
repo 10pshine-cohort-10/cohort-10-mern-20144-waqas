@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import React, { memo, useState } from "react";
 import {
   FiAlertCircle,
   FiArrowRight,
@@ -13,8 +13,11 @@ import {
 } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import type { AxiosError, AxiosResponse } from "axios";
 import logo from "../assets/logo.png";
-import AuthVisualCard from "../components/auth/AuthVisualCard";
+import AuthVisualCard, {
+  type AuthVisualHighlight,
+} from "../components/auth/AuthVisualCard";
 import Seo from "../components/common/Seo";
 import Footer from "../components/layout/Footer";
 import Navbar from "../components/layout/Navbar";
@@ -23,18 +26,68 @@ import api from "../services/api";
 const MemoizedFooter = memo(Footer);
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,50}$/;
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/;
 
-function validateRegister({ name, email, password, confirmPassword }) {
-  const errors = {};
+export interface RegisterFormValues {
+  name: string;
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+}
+
+export interface RegisterFormErrors {
+  name?: string;
+  username?: string;
+  email?: string;
+  password?: string;
+  confirmPassword?: string;
+  [key: string]: string | undefined;
+}
+
+export interface RegisterApiResponse {
+  statusCode?: number;
+  message?: string;
+  success?: boolean;
+  data?: {
+    user?: {
+      id: number | string;
+      username: string;
+      email: string;
+      name?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    };
+    accessToken?: string;
+    refreshToken?: string;
+  };
+}
+
+function validateRegister({
+  name,
+  username,
+  email,
+  password,
+  confirmPassword,
+}: RegisterFormValues): RegisterFormErrors {
+  const errors: RegisterFormErrors = {};
   const trimmedName = (name || "").trim();
+  const trimmedUsername = (username || "").trim();
   const trimmedEmail = (email || "").trim().toLowerCase();
 
   if (!trimmedName) {
     errors.name = "Full name is required.";
   } else if (trimmedName.length < 3) {
     errors.name = "Name must be at least 3 characters.";
+  }
+
+  if (!trimmedUsername) {
+    errors.username = "Username is required.";
+  } else if (!USERNAME_REGEX.test(trimmedUsername)) {
+    errors.username =
+      "Username must be 3-50 characters and contain only letters, numbers, dots, underscores, or hyphens.";
   }
 
   if (!trimmedEmail) {
@@ -61,7 +114,7 @@ function validateRegister({ name, email, password, confirmPassword }) {
   return errors;
 }
 
-const REGISTER_HIGHLIGHTS = [
+const REGISTER_HIGHLIGHTS: AuthVisualHighlight[] = [
   {
     icon: FiLayers,
     title: "Structured Notes & Routines",
@@ -84,22 +137,23 @@ const REGISTER_HIGHLIGHTS = [
 
 /* Register Page */
 
-function Register() {
+function Register(): React.JSX.Element {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterFormValues>({
     name: "",
+    username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<RegisterFormErrors>({});
+  const [serverError, setServerError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const handleChange = (event) => {
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -110,7 +164,9 @@ function Register() {
     }
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ): Promise<void> => {
     event.preventDefault();
     setServerError("");
 
@@ -122,28 +178,35 @@ function Register() {
 
     setIsSubmitting(true);
     try {
-      const response = await api.post("/auth/register", {
-        username: formData.name.trim(),
-        name: formData.name.trim(),
-        email: formData.email.trim().toLowerCase(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-      });
+      const response: AxiosResponse<RegisterApiResponse> =
+        await api.post<RegisterApiResponse>("/auth/register", {
+          name: formData.name.trim(),
+          username: formData.username.trim(),
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          confirmPassword: formData.confirmPassword,
+        });
 
       toast.success(
         response.data?.message || "Account created successfully! Please sign in.",
       );
       navigate("/login");
-    } catch (error) {
+    } catch (error: unknown) {
+      const axiosErr = error as AxiosError<{
+        message?: string;
+        errors?: Array<{ field?: string; message?: string }>;
+      }>;
       const message =
-        error.response?.data?.message ||
+        axiosErr.response?.data?.message ||
+        axiosErr.response?.data?.errors?.[0]?.message ||
+        (error instanceof Error ? error.message : null) ||
         "Registration failed. Please check your information and try again.";
       setServerError(message);
 
       if (message.toLowerCase().includes("email")) {
         setErrors((prev) => ({ ...prev, email: message }));
       } else if (message.toLowerCase().includes("username")) {
-        setErrors((prev) => ({ ...prev, name: message }));
+        setErrors((prev) => ({ ...prev, username: message }));
       }
 
       toast.error(message);
@@ -262,6 +325,45 @@ function Register() {
                           >
                             <FiAlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
                             <span>{errors.name}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label
+                          htmlFor="register-username"
+                          className="mb-1 block text-xs font-medium text-heading sm:text-sm"
+                        >
+                          Username
+                        </label>
+                        <div className="relative">
+                          <FiUser
+                            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted"
+                            aria-hidden="true"
+                          />
+                          <input
+                            id="register-username"
+                            name="username"
+                            type="text"
+                            autoComplete="username"
+                            value={formData.username}
+                            onChange={handleChange}
+                            placeholder="waqas_tariq"
+                            aria-invalid={Boolean(errors.username)}
+                            className={`w-full rounded-xl border bg-surface/75 py-2 pr-3 pl-9 text-xs text-heading placeholder:text-muted/70 transition-colors duration-150 focus:outline-none focus:ring-2 dark:bg-elevated/70 sm:text-sm ${
+                              errors.username
+                                ? "border-neon-pink/70 focus:ring-neon-pink/35"
+                                : "border-border focus:border-primary/60 focus:ring-primary/25"
+                            }`}
+                          />
+                        </div>
+                        {errors.username && (
+                          <p
+                            role="alert"
+                            className="mt-1 flex items-center gap-1 text-[11px] font-medium text-neon-pink sm:text-xs"
+                          >
+                            <FiAlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
+                            <span>{errors.username}</span>
                           </p>
                         )}
                       </div>

@@ -56,6 +56,7 @@ const FORGOT_HIGHLIGHTS: AuthVisualHighlight[] = [
 
 function ForgotPassword(): React.JSX.Element {
   const [email, setEmail] = useState<string>("");
+  const [submittedEmail, setSubmittedEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [serverError, setServerError] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -90,13 +91,15 @@ function ForgotPassword(): React.JSX.Element {
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     setIsSubmitting(true);
     try {
       const response: AxiosResponse<ForgotPasswordApiResponse> =
         await api.post<ForgotPasswordApiResponse>("/auth/forgot-password", {
-          email: email.trim().toLowerCase(),
+          email: normalizedEmail,
         });
 
+      setSubmittedEmail(normalizedEmail);
       setIsSubmitted(true);
       toast.success(
         response.data?.message ||
@@ -121,6 +124,7 @@ function ForgotPassword(): React.JSX.Element {
 
   const handleResetAgain = (): void => {
     setIsSubmitted(false);
+    setSubmittedEmail("");
     setServerError("");
     setError("");
   };
@@ -208,7 +212,7 @@ function ForgotPassword(): React.JSX.Element {
                         </h2>
                         <p className="text-xs text-muted leading-relaxed">
                           We sent a time-limited password reset link to{" "}
-                          <span className="font-semibold text-heading">{email}</span>. Please click the link within 15 minutes.
+                          <span className="font-semibold text-heading">{submittedEmail}</span>. Please click the link within 15 minutes.
                         </p>
                       </div>
                     </div>

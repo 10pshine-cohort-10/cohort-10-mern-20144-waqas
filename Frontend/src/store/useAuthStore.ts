@@ -107,7 +107,7 @@ const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   updateActivity: () => {
-    if (get().isAuthenticated) {
+    if (get().isAuthenticated && !get().isSessionExpired()) {
       const now = Date.now();
       inMemoryLastActive = now;
       try {

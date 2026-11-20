@@ -217,6 +217,7 @@ describe("Frontend Authentication Pages & Validations", () => {
 
       // Form Section
       expect(screen.getByLabelText("Full Name")).toBeInTheDocument();
+      expect(screen.getByLabelText("Username")).toBeInTheDocument();
       expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
       expect(screen.getByLabelText("Password")).toBeInTheDocument();
       expect(screen.getByLabelText("Confirm Password")).toBeInTheDocument();
@@ -239,6 +240,7 @@ describe("Frontend Authentication Pages & Validations", () => {
       fireEvent.click(screen.getByRole("button", { name: "Register" }));
 
       expect(screen.getByText("Full name is required.")).toBeInTheDocument();
+      expect(screen.getByText("Username is required.")).toBeInTheDocument();
       expect(screen.getByText("Email address is required.")).toBeInTheDocument();
       expect(screen.getByText("Password is required.")).toBeInTheDocument();
       expect(
@@ -271,6 +273,39 @@ describe("Frontend Authentication Pages & Validations", () => {
       ).toBeInTheDocument();
     });
 
+    test("validates invalid username with spaces or unsupported characters", () => {
+      render(
+        <MemoryRouter initialEntries={["/register"]}>
+          <Register />
+        </MemoryRouter>,
+      );
+
+      // Username with spaces
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "waqas tariq" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+      expect(
+        screen.getByText(
+          "Username must be 3-50 characters and contain only letters, numbers, dots, underscores, or hyphens.",
+        ),
+      ).toBeInTheDocument();
+
+      // Username with unsupported characters
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "waqas@dev!" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+      expect(
+        screen.getByText(
+          "Username must be 3-50 characters and contain only letters, numbers, dots, underscores, or hyphens.",
+        ),
+      ).toBeInTheDocument();
+      expect(api.post).not.toHaveBeenCalled();
+    });
+
     test("validates weak password failing complexity requirements", () => {
       render(
         <MemoryRouter initialEntries={["/register"]}>
@@ -280,6 +315,9 @@ describe("Frontend Authentication Pages & Validations", () => {
 
       fireEvent.change(screen.getByLabelText("Full Name"), {
         target: { value: "Waqas Tariq" },
+      });
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "waqas_tariq" },
       });
       fireEvent.change(screen.getByLabelText("Email Address"), {
         target: { value: "waqas@example.com" },
@@ -343,11 +381,11 @@ describe("Frontend Authentication Pages & Validations", () => {
       expect(confirmPasswordInput).toHaveAttribute("type", "text");
     });
 
-    test("handles successful registration, updates store, shows toast, and navigates", async () => {
+    test("handles successful registration with full name containing spaces and valid username", async () => {
       const mockCreatedUser = {
         id: 2,
-        username: "waqas_new",
-        email: "waqas_new@example.com",
+        username: "waqas_tariq",
+        email: "waqas@example.com",
       };
       api.post.mockResolvedValueOnce({
         data: {
@@ -364,10 +402,13 @@ describe("Frontend Authentication Pages & Validations", () => {
       );
 
       fireEvent.change(screen.getByLabelText("Full Name"), {
-        target: { value: "waqas_new" },
+        target: { value: "Waqas Tariq" },
+      });
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "waqas_tariq" },
       });
       fireEvent.change(screen.getByLabelText("Email Address"), {
-        target: { value: "waqas_new@example.com" },
+        target: { value: "waqas@example.com" },
       });
       fireEvent.change(screen.getByLabelText("Password"), {
         target: { value: "StrongPass!2026" },
@@ -380,9 +421,9 @@ describe("Frontend Authentication Pages & Validations", () => {
 
       await waitFor(() => {
         expect(api.post).toHaveBeenCalledWith("/auth/register", {
-          username: "waqas_new",
-          name: "waqas_new",
-          email: "waqas_new@example.com",
+          name: "Waqas Tariq",
+          username: "waqas_tariq",
+          email: "waqas@example.com",
           password: "StrongPass!2026",
           confirmPassword: "StrongPass!2026",
         });
@@ -411,7 +452,10 @@ describe("Frontend Authentication Pages & Validations", () => {
       );
 
       fireEvent.change(screen.getByLabelText("Full Name"), {
-        target: { value: "waqas" },
+        target: { value: "Waqas Tariq" },
+      });
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "waqas_tariq" },
       });
       fireEvent.change(screen.getByLabelText("Email Address"), {
         target: { value: "existing@example.com" },
@@ -433,6 +477,52 @@ describe("Frontend Authentication Pages & Validations", () => {
 
       expect(toast.error).toHaveBeenCalledWith(
         "User with this email already exists",
+      );
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    test("handles registration conflict (duplicate username) with in-field error and error toast", async () => {
+      api.post.mockRejectedValueOnce({
+        response: {
+          data: {
+            success: false,
+            message: "User with this username already exists",
+          },
+        },
+      });
+
+      render(
+        <MemoryRouter initialEntries={["/register"]}>
+          <Register />
+        </MemoryRouter>,
+      );
+
+      fireEvent.change(screen.getByLabelText("Full Name"), {
+        target: { value: "Waqas Tariq" },
+      });
+      fireEvent.change(screen.getByLabelText("Username"), {
+        target: { value: "taken_username" },
+      });
+      fireEvent.change(screen.getByLabelText("Email Address"), {
+        target: { value: "unique@example.com" },
+      });
+      fireEvent.change(screen.getByLabelText("Password"), {
+        target: { value: "StrongPass!2026" },
+      });
+      fireEvent.change(screen.getByLabelText("Confirm Password"), {
+        target: { value: "StrongPass!2026" },
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Register" }));
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByText("User with this username already exists").length,
+        ).toBeGreaterThanOrEqual(1);
+      });
+
+      expect(toast.error).toHaveBeenCalledWith(
+        "User with this username already exists",
       );
       expect(mockNavigate).not.toHaveBeenCalled();
     });
@@ -497,6 +587,72 @@ describe("Frontend Authentication Pages & Validations", () => {
       expect(useAuthStore.getState().isSessionExpired()).toBe(true);
       expect(localStorage.getItem("notiq_user")).toBeNull();
       expect(localStorage.getItem("notiq_last_active")).toBeNull();
+    });
+
+    test("renews activity normally for active, non-expired sessions", () => {
+      const now = 1700000000000;
+      jest.spyOn(Date, "now").mockReturnValue(now);
+
+      const testUser = {
+        id: "u-active",
+        username: "valid_session_user",
+        email: "valid@example.com",
+      };
+
+      useAuthStore.getState().setUser(testUser);
+      expect(localStorage.getItem("notiq_last_active")).toBe(now.toString());
+
+      // Advance time by 1 hour (well within 24h timeout)
+      const later = now + 60 * 60 * 1000;
+      Date.now.mockReturnValue(later);
+
+      expect(useAuthStore.getState().isSessionExpired()).toBe(false);
+
+      useAuthStore.getState().updateActivity();
+
+      expect(localStorage.getItem("notiq_last_active")).toBe(later.toString());
+      expect(useAuthStore.getState().isSessionExpired()).toBe(false);
+
+      jest.restoreAllMocks();
+    });
+
+    test("skips activity renewal and does not extend session when session has already expired", () => {
+      const now = 1700000000000;
+      jest.spyOn(Date, "now").mockReturnValue(now);
+
+      const testUser = {
+        id: "u-expired",
+        username: "expired_session_user",
+        email: "expired@example.com",
+      };
+
+      useAuthStore.getState().setUser(testUser);
+      expect(localStorage.getItem("notiq_last_active")).toBe(now.toString());
+
+      // Advance time past 24 hours (24h + 10s)
+      const expiredTime = now + 24 * 60 * 60 * 1000 + 10000;
+      Date.now.mockReturnValue(expiredTime);
+
+      // Session must be expired
+      expect(useAuthStore.getState().isSessionExpired()).toBe(true);
+
+      // Interaction after 24h calls updateActivity
+      useAuthStore.getState().updateActivity();
+
+      // Timestamp must NOT have been updated to expiredTime
+      expect(localStorage.getItem("notiq_last_active")).toBe(now.toString());
+      // Session must remain expired
+      expect(useAuthStore.getState().isSessionExpired()).toBe(true);
+
+      jest.restoreAllMocks();
+    });
+
+    test("unauthenticated users do not write activity timestamps on updateActivity", () => {
+      useAuthStore.getState().clearAuth();
+      useAuthStore.getState().updateActivity();
+
+      expect(localStorage.getItem("notiq_last_active")).toBeNull();
+      expect(useAuthStore.getState().isSessionExpired()).toBe(true);
     });
   });
 });

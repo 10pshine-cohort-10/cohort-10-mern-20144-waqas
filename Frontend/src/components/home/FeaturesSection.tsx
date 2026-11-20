@@ -88,13 +88,13 @@ export interface FeatureItemIconProps {
 }
 
 function FeatureItemIcon({ id }: FeatureItemIconProps): React.JSX.Element {
-  const props = {
+  const props: React.SVGProps<SVGSVGElement> = {
     viewBox: "0 0 24 24",
     fill: "none",
     stroke: "currentColor",
     strokeWidth: "1.9",
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
     className: "h-4 w-4 text-white",
     "aria-hidden": "true",
   };

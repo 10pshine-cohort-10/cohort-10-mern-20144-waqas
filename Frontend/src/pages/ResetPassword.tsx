@@ -92,7 +92,15 @@ function ResetPassword(): React.JSX.Element {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      // oxlint-disable-next-line react/set-state-in-effect
+      setVerificationState("invalid");
+      setVerificationError("Missing password reset token in the link.");
+      return;
+    }
+
+    setVerificationState("checking");
+    setVerificationError("");
 
     let isMounted = true;
 

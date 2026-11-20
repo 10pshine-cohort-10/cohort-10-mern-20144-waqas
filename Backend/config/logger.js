@@ -33,6 +33,7 @@ const redactPaths = [
   "*.accessToken",
   "*.refreshToken",
   "*.content",
+  "err.body",
 ];
 
 const logger = pino({

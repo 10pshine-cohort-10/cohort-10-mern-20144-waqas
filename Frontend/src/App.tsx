@@ -18,7 +18,20 @@ function ScrollToTop(): null {
   const { pathname, hash } = useLocation();
 
   useEffect(() => {
-    if (!hash && typeof window.scrollTo === "function") {
+    if (hash) {
+      const targetId = hash.slice(1);
+      const element = document.getElementById(targetId);
+      if (element && typeof element.scrollIntoView === "function") {
+        try {
+          element.scrollIntoView({ behavior: "auto", block: "start" });
+        } catch {
+          // Safe fallback for testing environments
+        }
+      }
+      return;
+    }
+
+    if (typeof window.scrollTo === "function") {
       try {
         window.scrollTo({ top: 0, behavior: "auto" });
       } catch {

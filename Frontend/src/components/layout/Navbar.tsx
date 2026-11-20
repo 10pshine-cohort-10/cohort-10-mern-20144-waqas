@@ -114,6 +114,7 @@ function Navbar(): React.JSX.Element {
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const navRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
 
   const isDark = theme === "dark";
@@ -156,6 +157,7 @@ function Navbar(): React.JSX.Element {
     const handleKeyDown = (event: KeyboardEvent): void => {
       if (event.key === "Escape") {
         setIsMenuOpen(false);
+        menuButtonRef.current?.focus();
       }
     };
 
@@ -237,6 +239,7 @@ function Navbar(): React.JSX.Element {
             </Link>
 
             <button
+              ref={menuButtonRef}
               type="button"
               onClick={() => setIsMenuOpen((prev) => !prev)}
               aria-expanded={isMenuOpen}

@@ -27,26 +27,20 @@ function Dashboard(): React.JSX.Element {
 
   const lastThrottleRef = useRef<number>(0);
 
-  const handleLogout = useCallback(async (): Promise<void> => {
-    try {
-      await api.post("/auth/logout").catch(() => {});
-    } finally {
-      clearAuth();
-      toast.success("You have been signed out successfully.");
-      navigate("/login", { replace: true });
-    }
+  const handleLogout = useCallback((): void => {
+    api.post("/auth/logout").catch(() => {});
+    clearAuth();
+    toast.success("You have been signed out successfully.");
+    navigate("/login", { replace: true });
   }, [clearAuth, navigate]);
 
-  const handleInactivityLogout = useCallback(async (): Promise<void> => {
-    try {
-      await api.post("/auth/logout").catch(() => {});
-    } finally {
-      clearAuth();
-      toast.warning(
-        "Your session expired due to 24 hours of inactivity. Please sign in again.",
-      );
-      navigate("/login", { replace: true });
-    }
+  const handleInactivityLogout = useCallback((): void => {
+    api.post("/auth/logout").catch(() => {});
+    clearAuth();
+    toast.warning(
+      "Your session expired due to 24 hours of inactivity. Please sign in again.",
+    );
+    navigate("/login", { replace: true });
   }, [clearAuth, navigate]);
 
   useEffect(() => {

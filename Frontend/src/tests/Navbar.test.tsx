@@ -116,5 +116,6 @@ describe("Navbar component", () => {
     await user.keyboard("{Escape}");
     expect(menuButton).toHaveAttribute("aria-expanded", "false");
     expect(mobileMenu).toHaveAttribute("aria-hidden", "true");
+    expect(menuButton).toHaveFocus();
   });
 });
