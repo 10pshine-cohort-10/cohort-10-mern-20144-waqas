@@ -48,29 +48,73 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
       expect(originalErr.stack).to.include("SuperSecretPassword123!");
     });
 
+    it("redacts passwords from truncated V8 error excerpts when payload exceeds V8 context threshold", () => {
+      const longPayload = '{"password":oopsSecret,"padding":"' + 'x'.repeat(60) + '"}';
+      /** @type {(SyntaxError & { body?: string; type?: string }) | undefined} */
+      let v8Err;
+      try {
+        JSON.parse(longPayload);
+      } catch (err) {
+        v8Err = /** @type {SyntaxError & { body?: string; type?: string }} */ (err);
+      }
+      expect(v8Err).to.be.an.instanceOf(SyntaxError);
+      if (!v8Err) throw new Error("Expected v8Err to be defined");
+      v8Err.body = longPayload;
+      v8Err.type = "entity.parse.failed";
+
+      // Verify raw V8 error actually produced a truncated excerpt containing the secret and ellipsis
+      expect(v8Err.message).to.include("oopsSecret");
+      expect(v8Err.message).to.include("...");
+
+      const sanitized = sanitizeJsonParseError(v8Err);
+
+      // Verify sanitized error hides submitted password and excerpt in message and stack
+      expect(sanitized.message).to.not.include("oopsSecret");
+      expect(sanitized.message).to.include("[REDACTED]");
+
+      expect(sanitized.stack).to.not.include("oopsSecret");
+      expect(sanitized.stack).to.include("[REDACTED]");
+
+      // Verify first line of stack is sanitized
+      const firstStackLine = (sanitized.stack || "").split("\n")[0];
+      expect(firstStackLine).to.not.include("oopsSecret");
+      expect(firstStackLine).to.include("[REDACTED]");
+
+      // Original error is preserved
+      expect(v8Err.message).to.include("oopsSecret");
+    });
+
     it("errorHandler logs sanitized message and err without exposing raw password", () => {
       const rawPayload = '{"password":"ExposedPassword999!"}';
       const parseErr = new SyntaxError(
         `Unexpected token 'E', "${rawPayload}" is not valid JSON`,
       );
-      parseErr.body = rawPayload;
-      parseErr.type = "entity.parse.failed";
+      /** @type {any} */ (parseErr).body = rawPayload;
+      /** @type {any} */ (parseErr).type = "entity.parse.failed";
 
+      /** @type {Record<string, any> | null} */
       let loggedObj = null;
+      /** @type {string | null} */
       let loggedMsg = null;
       const originalErrorLog = logger.error;
       logger.error = (obj, msg) => {
-        loggedObj = obj;
-        loggedMsg = msg;
+        loggedObj = /** @type {Record<string, any>} */ (obj);
+        loggedMsg = typeof msg === "string" ? msg : String(msg);
       };
 
+      /** @type {Partial<import("express").Request>} */
       const req = { method: "POST", url: "/api/v1/auth/login" };
+      /** @type {number | null} */
       let responseStatusCode = null;
+      /** @type {Record<string, any> | null} */
       let responseBody = null;
+      /** @type {Partial<import("express").Response>} */
       const res = {
+        /** @param {number} code */
         status: (code) => {
           responseStatusCode = code;
           return {
+            /** @param {Record<string, any>} data */
             json: (data) => {
               responseBody = data;
               return res;
@@ -80,16 +124,16 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
       };
 
       try {
-        errorHandler(parseErr, req, res, () => {});
+        errorHandler(parseErr, /** @type {any} */ (req), /** @type {any} */ (res), () => {});
 
         expect(responseStatusCode).to.equal(400);
-        expect(responseBody.message).to.equal("Invalid JSON payload");
+        expect(responseBody?.message).to.equal("Invalid JSON payload");
 
         expect(loggedMsg).to.not.include("ExposedPassword999!");
         expect(loggedMsg).to.include("[REDACTED]");
 
-        expect(loggedObj.err.message).to.not.include("ExposedPassword999!");
-        expect(loggedObj.err.message).to.include("[REDACTED]");
+        expect(loggedObj?.err?.message).to.not.include("ExposedPassword999!");
+        expect(loggedObj?.err?.message).to.include("[REDACTED]");
       } finally {
         logger.error = originalErrorLog;
       }
@@ -97,6 +141,7 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
   });
 
   describe("2. Scoped Logout Revocation Regression Tests", () => {
+    /** @type {typeof pool.query | undefined} */
     let originalQuery;
 
     beforeEach(() => {
@@ -104,7 +149,9 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
     });
 
     afterEach(() => {
-      pool.query = originalQuery;
+      if (originalQuery) {
+        pool.query = originalQuery;
+      }
     });
 
     it("proves a delayed logout from an older session cannot revoke a newer login refresh token or clear cookies", async () => {
@@ -113,11 +160,17 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
 
       const olderRefreshToken = "old_login_refresh_token_session_1";
 
+      /** @type {string | null} */
       let dbRefreshTokenHash = newerHash;
       let updateExecuted = false;
 
       // Mock pool.query to simulate database state where user has newer session active
-      pool.query = async (queryText, params) => {
+      /**
+       * @param {string} queryText
+       * @param {any[]} [params]
+       * @returns {Promise<{ rowCount: number; rows: any[] }>}
+       */
+      pool.query = async (queryText, params = []) => {
         if (queryText.includes("UPDATE users SET refresh_token_hash = NULL")) {
           updateExecuted = true;
           const targetUserId = params[0];
@@ -133,23 +186,29 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
         return { rowCount: 0, rows: [] };
       };
 
+      /** @type {string[]} */
       const clearedCookies = [];
-      const req = {
+      /** @type {import("../controllers/auth.controller.js").AuthenticatedRequest} */
+      const req = /** @type {any} */ ({
         user: { id: "user-123", email: "user@example.com" },
         cookies: {
           refreshToken: olderRefreshToken,
         },
-      };
+      });
 
+      /** @type {Partial<import("express").Response>} */
       const res = {
+        /** @param {number} code */
         status: (code) => {
           expect(code).to.equal(200);
           return res;
         },
+        /** @param {string} cookieName */
         clearCookie: (cookieName) => {
           clearedCookies.push(cookieName);
           return res;
         },
+        /** @param {Record<string, any>} data */
         json: (data) => {
           expect(data.success).to.be.true;
           return res;
@@ -157,7 +216,7 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
       };
 
       // Execute delayed logout for the older session
-      await logoutUser(req, res, () => {});
+      await logoutUser(/** @type {any} */ (req), /** @type {any} */ (res), () => {});
 
       // 1. The database refresh_token_hash for the newer session must NOT be revoked
       expect(updateExecuted).to.be.true;
@@ -171,9 +230,15 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
       const activeRefreshToken = "active_session_refresh_token";
       const activeHash = hashToken(activeRefreshToken);
 
+      /** @type {string | null} */
       let dbRefreshTokenHash = activeHash;
 
-      pool.query = async (queryText, params) => {
+      /**
+       * @param {string} queryText
+       * @param {any[]} [params]
+       * @returns {Promise<{ rowCount: number; rows: any[] }>}
+       */
+      pool.query = async (queryText, params = []) => {
         if (queryText.includes("UPDATE users SET refresh_token_hash = NULL")) {
           const targetUserId = params[0];
           const incomingTokenHash = params[1];
@@ -187,30 +252,36 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
         return { rowCount: 0, rows: [] };
       };
 
+      /** @type {string[]} */
       const clearedCookies = [];
-      const req = {
+      /** @type {import("../controllers/auth.controller.js").AuthenticatedRequest} */
+      const req = /** @type {any} */ ({
         user: { id: "user-123", email: "user@example.com" },
         cookies: {
           refreshToken: activeRefreshToken,
         },
-      };
+      });
 
+      /** @type {Partial<import("express").Response>} */
       const res = {
+        /** @param {number} code */
         status: (code) => {
           expect(code).to.equal(200);
           return res;
         },
+        /** @param {string} cookieName */
         clearCookie: (cookieName) => {
           clearedCookies.push(cookieName);
           return res;
         },
+        /** @param {Record<string, any>} data */
         json: (data) => {
           expect(data.success).to.be.true;
           return res;
         },
       };
 
-      await logoutUser(req, res, () => {});
+      await logoutUser(/** @type {any} */ (req), /** @type {any} */ (res), () => {});
 
       // Active session token was revoked in DB
       expect(dbRefreshTokenHash).to.be.null;

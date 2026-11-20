@@ -12,6 +12,12 @@ const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,50}$/;
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/;
 
+/**
+ * Computes a SHA-256 hash of a plain-text token.
+ *
+ * @param {string} token - The raw token string to hash.
+ * @returns {string} The hex-encoded SHA-256 hash.
+ */
 export function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -371,9 +377,37 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     });
 });
 
+/**
+ * @typedef {Object} AuthenticatedUser
+ * @property {string | number} id
+ * @property {string} username
+ * @property {string} email
+ * @property {string} [name]
+ * @property {string} [createdAt]
+ * @property {string} [updatedAt]
+ */
+
+/**
+ * @typedef {import("express").Request & {
+ *   user: AuthenticatedUser;
+ *   cookies: Record<string, string | undefined>;
+ *   body: { refreshToken?: string; [key: string]: unknown };
+ * }} AuthenticatedRequest
+ */
+
+/**
+ * Handles user sign-out by revoking the refresh token session in the database
+ * and clearing authentication cookies.
+ *
+ * @param {AuthenticatedRequest} req - Authenticated HTTP request containing user session and optional refresh token.
+ * @param {import("express").Response} res - Express HTTP response object.
+ * @returns {Promise<import("express").Response>} JSON response confirming sign-out.
+ */
 export const logoutUser = asyncHandler(async (req, res) => {
+  /** @type {string | undefined} */
   const incomingRefreshToken =
-    req.cookies?.refreshToken || req.body?.refreshToken;
+    (typeof req.cookies?.refreshToken === "string" ? req.cookies.refreshToken : undefined) ||
+    (typeof req.body?.refreshToken === "string" ? req.body.refreshToken : undefined);
 
   let sessionRevoked = false;
 

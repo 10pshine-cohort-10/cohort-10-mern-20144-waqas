@@ -37,16 +37,31 @@ const redactPaths = [
 ];
 
 /**
+ * @typedef {Error & {
+ *   type?: string;
+ *   body?: string;
+ *   status?: number;
+ *   statusCode?: number;
+ *   [key: string]: unknown;
+ * }} JsonParseErrorLike
+ */
+
+/**
  * Detects whether an error represents a JSON parsing failure.
  *
  * @param {unknown} err - Error object to inspect.
- * @returns {boolean} True if error is from JSON parser.
+ * @returns {err is JsonParseErrorLike} True if error is from JSON parser.
  */
 export function isJsonParseError(err) {
   if (!err || typeof err !== "object") return false;
+  const candidate = /** @type {Record<string, unknown>} */ (err);
   return Boolean(
-    err.type === "entity.parse.failed" ||
-    (err instanceof SyntaxError && ("body" in err || err.status === 400 || err.statusCode === 400)) ||
+    candidate.type === "entity.parse.failed" ||
+    (err instanceof SyntaxError && (
+      "body" in candidate ||
+      candidate.status === 400 ||
+      candidate.statusCode === 400
+    )) ||
     (err instanceof SyntaxError && typeof err.message === "string" && (
       err.message.includes("JSON") ||
       err.message.includes("Unexpected token")
@@ -59,19 +74,24 @@ export function isJsonParseError(err) {
  * that Node 20+ V8 JSON.parse may embed in `err.message` and `err.stack`.
  * Does not mutate the original error object.
  *
- * @param {Error} err - Original JSON parse error.
- * @returns {Error} Sanitized error safe for logging.
+ * @param {JsonParseErrorLike | Error} err - Original JSON parse error.
+ * @returns {JsonParseErrorLike | Error} Sanitized error safe for logging.
  */
 export function sanitizeJsonParseError(err) {
   if (!isJsonParseError(err)) return err;
 
   const rawMessage = typeof err.message === "string" ? err.message : "Invalid JSON payload";
 
-  // Redact any JSON source snippet in Node 20+ error messages before "is not valid JSON"
-  let safeMessage = rawMessage.replace(/(?:".*"|'.*') is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
-
   // Redact token content if present: `Unexpected token '...'`
-  safeMessage = safeMessage.replace(/Unexpected token (?:'[^']*'|"[^"]*")/gi, "Unexpected token '[REDACTED]'");
+  let safeMessage = rawMessage.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gi, "Unexpected token '[REDACTED]', ");
+
+  // Redact any JSON source snippet in Node 20+ error messages before "is not valid JSON",
+  // including complete, leading-truncated (..."), trailing-truncated ("...), or both (... "...).
+  safeMessage = safeMessage.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+
+  if (safeMessage.includes("is not valid JSON") && !safeMessage.includes('"[REDACTED]" is not valid JSON')) {
+    safeMessage = safeMessage.replace(/.*?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+  }
 
   // Redact raw request body if attached to error or present in message
   if (typeof err.body === "string" && err.body.length > 0) {
@@ -84,8 +104,11 @@ export function sanitizeJsonParseError(err) {
     stackLines[0] = `${err.name || "SyntaxError"}: ${safeMessage}`;
     safeStack = stackLines.join("\n");
 
-    safeStack = safeStack.replace(/(?:".*"|'.*') is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
-    safeStack = safeStack.replace(/Unexpected token (?:'[^']*'|"[^"]*")/gi, "Unexpected token '[REDACTED]'");
+    safeStack = safeStack.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gi, "Unexpected token '[REDACTED]', ");
+    safeStack = safeStack.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+    if (safeStack.includes("is not valid JSON") && !safeStack.includes('"[REDACTED]" is not valid JSON')) {
+      safeStack = safeStack.replace(/.*?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+    }
     if (typeof err.body === "string" && err.body.length > 0) {
       safeStack = safeStack.replaceAll(err.body, "[REDACTED]");
     }
@@ -108,8 +131,13 @@ const logger = pino({
     censor: "[REDACTED]",
   },
   serializers: {
+    /**
+     * @param {unknown} err - The error object to serialize.
+     * @returns {import("pino").SerializedError} Serialized error representation.
+     */
     err: (err) => {
-      const target = isJsonParseError(err) ? sanitizeJsonParseError(err) : err;
+      const errorObj = err instanceof Error ? err : new Error(String(err));
+      const target = isJsonParseError(errorObj) ? sanitizeJsonParseError(errorObj) : errorObj;
       return pino.stdSerializers.err(target);
     },
   },
