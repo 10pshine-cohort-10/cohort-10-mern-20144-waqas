@@ -37,10 +37,12 @@ describe("Dashboard logout behavior", () => {
     username: "testuser",
     name: "Test User",
   };
+  const originalIsSessionExpired = useAuthStore.getState().isSessionExpired;
 
   beforeEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    useAuthStore.setState({ isSessionExpired: originalIsSessionExpired });
     useAuthStore.getState().clearAuth();
   });
 
@@ -101,6 +103,9 @@ describe("Dashboard logout behavior", () => {
         <Dashboard />
       </MemoryRouter>,
     );
+
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(useAuthStore.getState().user).toEqual(mockUser);
 
     const logoutButton = screen.getByRole("button", { name: /logout/i });
     fireEvent.click(logoutButton);

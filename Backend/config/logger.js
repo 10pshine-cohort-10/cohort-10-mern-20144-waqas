@@ -36,11 +36,82 @@ const redactPaths = [
   "err.body",
 ];
 
+/**
+ * Detects whether an error represents a JSON parsing failure.
+ *
+ * @param {unknown} err - Error object to inspect.
+ * @returns {boolean} True if error is from JSON parser.
+ */
+export function isJsonParseError(err) {
+  if (!err || typeof err !== "object") return false;
+  return Boolean(
+    err.type === "entity.parse.failed" ||
+    (err instanceof SyntaxError && ("body" in err || err.status === 400 || err.statusCode === 400)) ||
+    (err instanceof SyntaxError && typeof err.message === "string" && (
+      err.message.includes("JSON") ||
+      err.message.includes("Unexpected token")
+    ))
+  );
+}
+
+/**
+ * Sanitizes JSON parser errors by redacting any raw JSON source text
+ * that Node 20+ V8 JSON.parse may embed in `err.message` and `err.stack`.
+ * Does not mutate the original error object.
+ *
+ * @param {Error} err - Original JSON parse error.
+ * @returns {Error} Sanitized error safe for logging.
+ */
+export function sanitizeJsonParseError(err) {
+  if (!isJsonParseError(err)) return err;
+
+  const rawMessage = typeof err.message === "string" ? err.message : "Invalid JSON payload";
+
+  // Redact any JSON source snippet in Node 20+ error messages before "is not valid JSON"
+  let safeMessage = rawMessage.replace(/(?:".*"|'.*') is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+
+  // Redact token content if present: `Unexpected token '...'`
+  safeMessage = safeMessage.replace(/Unexpected token (?:'[^']*'|"[^"]*")/gi, "Unexpected token '[REDACTED]'");
+
+  // Redact raw request body if attached to error or present in message
+  if (typeof err.body === "string" && err.body.length > 0) {
+    safeMessage = safeMessage.replaceAll(err.body, "[REDACTED]");
+  }
+
+  let safeStack = undefined;
+  if (typeof err.stack === "string") {
+    const stackLines = err.stack.split("\n");
+    stackLines[0] = `${err.name || "SyntaxError"}: ${safeMessage}`;
+    safeStack = stackLines.join("\n");
+
+    safeStack = safeStack.replace(/(?:".*"|'.*') is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+    safeStack = safeStack.replace(/Unexpected token (?:'[^']*'|"[^"]*")/gi, "Unexpected token '[REDACTED]'");
+    if (typeof err.body === "string" && err.body.length > 0) {
+      safeStack = safeStack.replaceAll(err.body, "[REDACTED]");
+    }
+  }
+
+  const sanitized = Object.create(Object.getPrototypeOf(err));
+  Object.assign(sanitized, err);
+  sanitized.message = safeMessage;
+  if (safeStack !== undefined) {
+    sanitized.stack = safeStack;
+  }
+
+  return sanitized;
+}
+
 const logger = pino({
   level: isTest ? "silent" : process.env.LOG_LEVEL || (isProduction ? "info" : "debug"),
   redact: {
     paths: redactPaths,
     censor: "[REDACTED]",
+  },
+  serializers: {
+    err: (err) => {
+      const target = isJsonParseError(err) ? sanitizeJsonParseError(err) : err;
+      return pino.stdSerializers.err(target);
+    },
   },
   ...(transport ? { transport } : {}),
 });

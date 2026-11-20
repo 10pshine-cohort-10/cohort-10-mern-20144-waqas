@@ -1,3 +1,4 @@
+import React from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import App from "../App";
@@ -10,7 +11,7 @@ jest.mock("../services/api", () => ({
 }));
 
 describe("App setup smoke test", () => {
-  let originalScrollTo;
+  let originalScrollTo: typeof window.scrollTo;
 
   beforeEach(() => {
     originalScrollTo = window.scrollTo;

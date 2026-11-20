@@ -1,4 +1,9 @@
-import { logger, sanitizeUrl } from "../config/logger.js";
+import {
+  isJsonParseError,
+  logger,
+  sanitizeJsonParseError,
+  sanitizeUrl,
+} from "../config/logger.js";
 
 export class ApiError extends Error {
   constructor(statusCode, message = "Something went wrong", errors = []) {
@@ -57,18 +62,24 @@ export function errorHandler(err, req, res, _next) {
     }
   }
 
+  const isJsonError = isJsonParseError(err);
+  const logErr = isJsonError ? sanitizeJsonParseError(err) : err;
+  const logMessage = isJsonError
+    ? (logErr.message || "Invalid JSON payload")
+    : (err?.message || message);
+
   const rawUrl = req?.originalUrl || req?.url || "";
   const safeUrl = sanitizeUrl(rawUrl);
 
   logger.error(
     {
-      err,
+      err: logErr,
       method: req?.method,
       url: safeUrl,
       statusCode,
       errCode: err?.code,
     },
-    err?.message || message,
+    logMessage,
   );
 
   return res.status(statusCode).json({

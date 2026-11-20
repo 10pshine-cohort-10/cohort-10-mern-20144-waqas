@@ -61,137 +61,157 @@ describe("ForgotPassword Page", () => {
   });
 
   it("submits normalized email and displays success confirmation with submitted email", async () => {
-    (api.post as jest.Mock).mockResolvedValueOnce({
-      data: {
-        success: true,
-        message: "Reset link dispatched successfully.",
-      },
-    });
-
-    render(
-      <MemoryRouter initialEntries={["/forgot-password"]}>
-        <ForgotPassword />
-      </MemoryRouter>,
-    );
-
-    fireEvent.change(screen.getByLabelText("Registered Email Address"), {
-      target: { value: "  Alex.Dev@Example.COM  " },
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
-
-    await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith("/auth/forgot-password", {
-        email: "alex.dev@example.com",
+    try {
+      (api.post as jest.Mock).mockResolvedValueOnce({
+        data: {
+          success: true,
+          message: "Reset link dispatched successfully.",
+        },
       });
-    });
 
-    await waitFor(() => {
-      expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
-    });
+      render(
+        <MemoryRouter initialEntries={["/forgot-password"]}>
+          <ForgotPassword />
+        </MemoryRouter>,
+      );
 
-    expect(screen.getByText("alex.dev@example.com")).toBeInTheDocument();
-    expect(toast.success).toHaveBeenCalledWith(
-      "Reset link dispatched successfully.",
-    );
+      fireEvent.change(screen.getByLabelText("Registered Email Address"), {
+        target: { value: "  Alex.Dev@Example.COM  " },
+      });
+
+      fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+
+      await waitFor(() => {
+        expect(api.post).toHaveBeenCalledWith("/auth/forgot-password", {
+          email: "alex.dev@example.com",
+        });
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
+      });
+
+      expect(screen.getByText("alex.dev@example.com")).toBeInTheDocument();
+      expect(toast.success).toHaveBeenCalledWith(
+        "Reset link dispatched successfully.",
+      );
+      // eslint-disable-next-line no-useless-catch
+    } catch (error) {
+      throw error;
+    }
   });
 
   it("changing editable email during/after submission does not change the email shown in the success confirmation", async () => {
-    let resolveApiPost: (value: unknown) => void = () => {};
-    const apiPromise = new Promise((resolve) => {
-      resolveApiPost = resolve;
-    });
-    (api.post as jest.Mock).mockReturnValueOnce(apiPromise);
+    try {
+      let resolveApiPost: (value: unknown) => void = () => {};
+      const apiPromise = new Promise((resolve) => {
+        resolveApiPost = resolve;
+      });
+      (api.post as jest.Mock).mockReturnValueOnce(apiPromise);
 
-    render(
-      <MemoryRouter initialEntries={["/forgot-password"]}>
-        <ForgotPassword />
-      </MemoryRouter>,
-    );
+      render(
+        <MemoryRouter initialEntries={["/forgot-password"]}>
+          <ForgotPassword />
+        </MemoryRouter>,
+      );
 
-    const emailInput = screen.getByLabelText("Registered Email Address");
-    fireEvent.change(emailInput, {
-      target: { value: "original@example.com" },
-    });
+      const emailInput = screen.getByLabelText("Registered Email Address");
+      fireEvent.change(emailInput, {
+        target: { value: "original@example.com" },
+      });
 
-    fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+      fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
 
-    // While the request is pending, mutate the editable email input
-    fireEvent.change(emailInput, {
-      target: { value: "different-edited@example.com" },
-    });
+      // While the request is pending, mutate the editable email input
+      fireEvent.change(emailInput, {
+        target: { value: "different-edited@example.com" },
+      });
 
-    // Resolve API request
-    resolveApiPost({
-      data: {
-        success: true,
-        message: "Password reset link sent!",
-      },
-    });
+      // Resolve API request
+      resolveApiPost({
+        data: {
+          success: true,
+          message: "Password reset link sent!",
+        },
+      });
 
-    await waitFor(() => {
-      expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
-    });
+      await waitFor(() => {
+        expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
+      });
 
-    // The displayed confirmation must show the submitted/sent email, NOT the edited input
-    expect(screen.getByText("original@example.com")).toBeInTheDocument();
-    expect(screen.queryByText("different-edited@example.com")).not.toBeInTheDocument();
+      // The displayed confirmation must show the submitted/sent email, NOT the edited input
+      expect(screen.getByText("original@example.com")).toBeInTheDocument();
+      expect(screen.queryByText("different-edited@example.com")).not.toBeInTheDocument();
+      // eslint-disable-next-line no-useless-catch
+    } catch (error) {
+      throw error;
+    }
   });
 
   it("allows resending after success and resets confirmation state", async () => {
-    (api.post as jest.Mock).mockResolvedValueOnce({
-      data: { success: true },
-    });
+    try {
+      (api.post as jest.Mock).mockResolvedValueOnce({
+        data: { success: true },
+      });
 
-    render(
-      <MemoryRouter initialEntries={["/forgot-password"]}>
-        <ForgotPassword />
-      </MemoryRouter>,
-    );
+      render(
+        <MemoryRouter initialEntries={["/forgot-password"]}>
+          <ForgotPassword />
+        </MemoryRouter>,
+      );
 
-    fireEvent.change(screen.getByLabelText("Registered Email Address"), {
-      target: { value: "first@example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+      fireEvent.change(screen.getByLabelText("Registered Email Address"), {
+        target: { value: "first@example.com" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
 
-    await waitFor(() => {
-      expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
-    });
+      await waitFor(() => {
+        expect(screen.getByText("Check Your Inbox")).toBeInTheDocument();
+      });
 
-    fireEvent.click(screen.getByRole("button", { name: "Resend Email" }));
+      fireEvent.click(screen.getByRole("button", { name: "Resend Email" }));
 
-    expect(screen.queryByText("Check Your Inbox")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Registered Email Address")).toBeInTheDocument();
+      expect(screen.queryByText("Check Your Inbox")).not.toBeInTheDocument();
+      expect(screen.getByLabelText("Registered Email Address")).toBeInTheDocument();
+      // eslint-disable-next-line no-useless-catch
+    } catch (error) {
+      throw error;
+    }
   });
 
   it("displays server error when API request fails", async () => {
-    (api.post as jest.Mock).mockRejectedValueOnce({
-      response: {
-        data: {
-          message: "No account found with this email address.",
+    try {
+      (api.post as jest.Mock).mockRejectedValueOnce({
+        response: {
+          data: {
+            message: "No account found with this email address.",
+          },
         },
-      },
-    });
+      });
 
-    render(
-      <MemoryRouter initialEntries={["/forgot-password"]}>
-        <ForgotPassword />
-      </MemoryRouter>,
-    );
+      render(
+        <MemoryRouter initialEntries={["/forgot-password"]}>
+          <ForgotPassword />
+        </MemoryRouter>,
+      );
 
-    fireEvent.change(screen.getByLabelText("Registered Email Address"), {
-      target: { value: "unknown@example.com" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
+      fireEvent.change(screen.getByLabelText("Registered Email Address"), {
+        target: { value: "unknown@example.com" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Send Reset Link" }));
 
-    await waitFor(() => {
-      expect(
-        screen.getByText("No account found with this email address."),
-      ).toBeInTheDocument();
-    });
+      await waitFor(() => {
+        expect(
+          screen.getByText("No account found with this email address."),
+        ).toBeInTheDocument();
+      });
 
-    expect(toast.error).toHaveBeenCalledWith(
-      "No account found with this email address.",
-    );
+      expect(toast.error).toHaveBeenCalledWith(
+        "No account found with this email address.",
+      );
+      // eslint-disable-next-line no-useless-catch
+    } catch (error) {
+      throw error;
+    }
   });
 });

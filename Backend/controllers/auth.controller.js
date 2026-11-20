@@ -12,7 +12,7 @@ const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,50}$/;
 const STRONG_PASSWORD_REGEX =
   /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,128}$/;
 
-function hashToken(token) {
+export function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
@@ -372,23 +372,43 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 export const logoutUser = asyncHandler(async (req, res) => {
-  await pool.query(
-    "UPDATE users SET refresh_token_hash = NULL, updated_at = NOW() WHERE id = $1",
-    [req.user.id],
+  const incomingRefreshToken =
+    req.cookies?.refreshToken || req.body?.refreshToken;
+
+  let sessionRevoked = false;
+
+  if (incomingRefreshToken) {
+    const incomingHash = hashToken(incomingRefreshToken);
+    const result = await pool.query(
+      "UPDATE users SET refresh_token_hash = NULL, updated_at = NOW() WHERE id = $1 AND refresh_token_hash = $2 RETURNING id",
+      [req.user.id, incomingHash],
+    );
+    sessionRevoked = (result.rowCount ?? 0) > 0;
+  } else {
+    // Fallback if client did not supply a refresh token: revoke current stored token
+    const result = await pool.query(
+      "UPDATE users SET refresh_token_hash = NULL, updated_at = NOW() WHERE id = $1 RETURNING id",
+      [req.user.id],
+    );
+    sessionRevoked = (result.rowCount ?? 0) > 0;
+  }
+
+  logger.info(
+    { userId: req.user.id, sessionRevoked },
+    sessionRevoked ? "User logged out" : "Stale logout request ignored for newer session",
   );
 
-  logger.info({ userId: req.user.id }, "User logged out");
+  if (sessionRevoked) {
+    res.clearCookie("accessToken", jwtConfig.cookieOptions);
+    res.clearCookie("refreshToken", jwtConfig.cookieOptions);
+  }
 
-  return res
-    .status(200)
-    .clearCookie("accessToken", jwtConfig.cookieOptions)
-    .clearCookie("refreshToken", jwtConfig.cookieOptions)
-    .json({
-      statusCode: 200,
-      data: {},
-      message: "Logged out successfully",
-      success: true,
-    });
+  return res.status(200).json({
+    statusCode: 200,
+    data: {},
+    message: "Logged out successfully",
+    success: true,
+  });
 });
 
 export const getCurrentUser = asyncHandler(async (req, res) => {

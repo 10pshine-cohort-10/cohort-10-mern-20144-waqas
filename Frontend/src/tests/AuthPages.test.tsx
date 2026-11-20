@@ -1,10 +1,14 @@
+import React from "react";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { toast } from "react-toastify";
 import Login from "../pages/Login";
-import Register from "../pages/Register";
+import Register, { type RegisterApiResponse } from "../pages/Register";
 import api from "../services/api";
-import useAuthStore from "../store/useAuthStore";
+import useAuthStore, {
+  type AuthApiResponse,
+  type User,
+} from "../store/useAuthStore";
 
 jest.mock("../services/api", () => ({
   __esModule: true,
@@ -56,10 +60,9 @@ describe("Frontend Authentication Pages & Validations", () => {
       expect(screen.getByLabelText("Email Address")).toBeInTheDocument();
       expect(screen.getByLabelText("Password")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Login" })).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: "Create an account" })).toHaveAttribute(
-        "href",
-        "/register",
-      );
+      expect(
+        screen.getByRole("link", { name: "Create an account" }),
+      ).toHaveAttribute("href", "/register");
     });
 
     test("validates empty submission and shows in-field error messages", () => {
@@ -118,17 +121,18 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("handles successful login, updates auth store, triggers toast, and navigates", async () => {
-      const mockUser = {
+      const mockUser: User = {
         id: 1,
         username: "waqas",
         email: "waqas@example.com",
       };
-      api.post.mockResolvedValueOnce({
-        data: {
-          success: true,
-          message: "Welcome back to Notiq!",
-          data: { user: mockUser },
-        },
+      const mockLoginResponse: AuthApiResponse = {
+        success: true,
+        message: "Welcome back to Notiq!",
+        data: { user: mockUser },
+      };
+      (api.post as jest.Mock).mockResolvedValueOnce({
+        data: mockLoginResponse,
       });
 
       render(
@@ -160,7 +164,7 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("displays server error message and error toast on invalid credentials", async () => {
-      api.post.mockRejectedValueOnce({
+      (api.post as jest.Mock).mockRejectedValueOnce({
         response: {
           data: {
             success: false,
@@ -382,17 +386,18 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("handles successful registration with full name containing spaces and valid username", async () => {
-      const mockCreatedUser = {
+      const mockCreatedUser: User = {
         id: 2,
         username: "waqas_tariq",
         email: "waqas@example.com",
       };
-      api.post.mockResolvedValueOnce({
-        data: {
-          success: true,
-          message: "Account created! Welcome to Notiq.",
-          data: { user: mockCreatedUser },
-        },
+      const mockRegisterResponse: RegisterApiResponse = {
+        success: true,
+        message: "Account created! Welcome to Notiq.",
+        data: { user: mockCreatedUser },
+      };
+      (api.post as jest.Mock).mockResolvedValueOnce({
+        data: mockRegisterResponse,
       });
 
       render(
@@ -436,7 +441,7 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("handles registration conflict (duplicate email) with in-field error and error toast", async () => {
-      api.post.mockRejectedValueOnce({
+      (api.post as jest.Mock).mockRejectedValueOnce({
         response: {
           data: {
             success: false,
@@ -482,49 +487,54 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("handles registration conflict (duplicate username) with in-field error and error toast", async () => {
-      api.post.mockRejectedValueOnce({
-        response: {
-          data: {
-            success: false,
-            message: "User with this username already exists",
+      try {
+        (api.post as jest.Mock).mockRejectedValueOnce({
+          response: {
+            data: {
+              success: false,
+              message: "User with this username already exists",
+            },
           },
-        },
-      });
+        });
 
-      render(
-        <MemoryRouter initialEntries={["/register"]}>
-          <Register />
-        </MemoryRouter>,
-      );
+        render(
+          <MemoryRouter initialEntries={["/register"]}>
+            <Register />
+          </MemoryRouter>,
+        );
 
-      fireEvent.change(screen.getByLabelText("Full Name"), {
-        target: { value: "Waqas Tariq" },
-      });
-      fireEvent.change(screen.getByLabelText("Username"), {
-        target: { value: "taken_username" },
-      });
-      fireEvent.change(screen.getByLabelText("Email Address"), {
-        target: { value: "unique@example.com" },
-      });
-      fireEvent.change(screen.getByLabelText("Password"), {
-        target: { value: "StrongPass!2026" },
-      });
-      fireEvent.change(screen.getByLabelText("Confirm Password"), {
-        target: { value: "StrongPass!2026" },
-      });
+        fireEvent.change(screen.getByLabelText("Full Name"), {
+          target: { value: "Waqas Tariq" },
+        });
+        fireEvent.change(screen.getByLabelText("Username"), {
+          target: { value: "taken_username" },
+        });
+        fireEvent.change(screen.getByLabelText("Email Address"), {
+          target: { value: "unique@example.com" },
+        });
+        fireEvent.change(screen.getByLabelText("Password"), {
+          target: { value: "StrongPass!2026" },
+        });
+        fireEvent.change(screen.getByLabelText("Confirm Password"), {
+          target: { value: "StrongPass!2026" },
+        });
 
-      fireEvent.click(screen.getByRole("button", { name: "Register" }));
+        fireEvent.click(screen.getByRole("button", { name: "Register" }));
 
-      await waitFor(() => {
-        expect(
-          screen.getAllByText("User with this username already exists").length,
-        ).toBeGreaterThanOrEqual(1);
-      });
+        await waitFor(() => {
+          expect(
+            screen.getAllByText("User with this username already exists").length,
+          ).toBeGreaterThanOrEqual(1);
+        });
 
-      expect(toast.error).toHaveBeenCalledWith(
-        "User with this username already exists",
-      );
-      expect(mockNavigate).not.toHaveBeenCalled();
+        expect(toast.error).toHaveBeenCalledWith(
+          "User with this username already exists",
+        );
+        expect(mockNavigate).not.toHaveBeenCalled();
+        // eslint-disable-next-line no-useless-catch
+      } catch (error) {
+        throw error;
+      }
     });
   });
 
@@ -534,7 +544,7 @@ describe("Frontend Authentication Pages & Validations", () => {
         throw new DOMException("QuotaExceededError");
       });
 
-      const testUser = {
+      const testUser: User = {
         id: "u-123",
         username: "storage_fail_user",
         email: "storage_fail@example.com",
@@ -556,7 +566,7 @@ describe("Frontend Authentication Pages & Validations", () => {
         throw new DOMException("QuotaExceededError");
       });
 
-      const testUser = {
+      const testUser: User = {
         id: "u-456",
         username: "active_user",
         email: "active@example.com",
@@ -571,7 +581,7 @@ describe("Frontend Authentication Pages & Validations", () => {
     });
 
     test("clears both in-memory and persisted credentials on clearAuth", () => {
-      const testUser = {
+      const testUser: User = {
         id: "u-789",
         username: "cleared_user",
         email: "cleared@example.com",
@@ -593,7 +603,7 @@ describe("Frontend Authentication Pages & Validations", () => {
       const now = 1700000000000;
       jest.spyOn(Date, "now").mockReturnValue(now);
 
-      const testUser = {
+      const testUser: User = {
         id: "u-active",
         username: "valid_session_user",
         email: "valid@example.com",
@@ -620,7 +630,7 @@ describe("Frontend Authentication Pages & Validations", () => {
       const now = 1700000000000;
       jest.spyOn(Date, "now").mockReturnValue(now);
 
-      const testUser = {
+      const testUser: User = {
         id: "u-expired",
         username: "expired_session_user",
         email: "expired@example.com",
