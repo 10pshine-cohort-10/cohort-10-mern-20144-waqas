@@ -84,6 +84,40 @@ describe("JSON Parser Error Sanitization & Scoped Logout Regression Tests", () =
       expect(v8Err.message).to.include("oopsSecret");
     });
 
+    it("redacts passwords from multiline V8 error excerpts when payload spans newlines", () => {
+      const multilinePayload = '{"password":S3cr3t,\n"padding":"' + 'x'.repeat(60) + '"}';
+      /** @type {(SyntaxError & { body?: string; type?: string }) | undefined} */
+      let v8Err;
+      try {
+        JSON.parse(multilinePayload);
+      } catch (err) {
+        v8Err = /** @type {SyntaxError & { body?: string; type?: string }} */ (err);
+      }
+      expect(v8Err).to.be.an.instanceOf(SyntaxError);
+      if (!v8Err) throw new Error("Expected v8Err to be defined");
+      v8Err.body = multilinePayload;
+      v8Err.type = "entity.parse.failed";
+
+      // Verify raw V8 error actually produced a multiline excerpt containing the secret and newline
+      expect(v8Err.message).to.include("S3cr3t");
+      expect(v8Err.message).to.include("\n");
+
+      const sanitized = sanitizeJsonParseError(v8Err);
+
+      // Verify sanitized error completely removes secret from message and stack
+      expect(sanitized.message).to.not.include("S3cr3t");
+      expect(sanitized.message).to.include("[REDACTED]");
+
+      expect(sanitized.stack).to.not.include("S3cr3t");
+      expect(sanitized.stack).to.include("[REDACTED]");
+
+      // Verify stack does not leak intermediate multiline excerpt
+      expect(sanitized.stack).to.not.include('"padding"');
+
+      // Original error is preserved
+      expect(v8Err.message).to.include("S3cr3t");
+    });
+
     it("errorHandler logs sanitized message and err without exposing raw password", () => {
       const rawPayload = '{"password":"ExposedPassword999!"}';
       const parseErr = new SyntaxError(

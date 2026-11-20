@@ -83,14 +83,14 @@ export function sanitizeJsonParseError(err) {
   const rawMessage = typeof err.message === "string" ? err.message : "Invalid JSON payload";
 
   // Redact token content if present: `Unexpected token '...'`
-  let safeMessage = rawMessage.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gi, "Unexpected token '[REDACTED]', ");
+  let safeMessage = rawMessage.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gis, "Unexpected token '[REDACTED]', ");
 
   // Redact any JSON source snippet in Node 20+ error messages before "is not valid JSON",
-  // including complete, leading-truncated (..."), trailing-truncated ("...), or both (... "...).
-  safeMessage = safeMessage.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+  // including multiline, leading-truncated (..."), trailing-truncated ("...), or both (... "...).
+  safeMessage = safeMessage.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gis, '"[REDACTED]" is not valid JSON');
 
   if (safeMessage.includes("is not valid JSON") && !safeMessage.includes('"[REDACTED]" is not valid JSON')) {
-    safeMessage = safeMessage.replace(/.*?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+    safeMessage = safeMessage.replace(/.*?\s+is not valid JSON/gis, '"[REDACTED]" is not valid JSON');
   }
 
   // Redact raw request body if attached to error or present in message
@@ -100,14 +100,17 @@ export function sanitizeJsonParseError(err) {
 
   let safeStack = undefined;
   if (typeof err.stack === "string") {
-    const stackLines = err.stack.split("\n");
-    stackLines[0] = `${err.name || "SyntaxError"}: ${safeMessage}`;
-    safeStack = stackLines.join("\n");
+    const atIndex = err.stack.indexOf("\n    at ");
+    if (atIndex !== -1) {
+      safeStack = `${err.name || "SyntaxError"}: ${safeMessage}${err.stack.slice(atIndex)}`;
+    } else {
+      safeStack = `${err.name || "SyntaxError"}: ${safeMessage}`;
+    }
 
-    safeStack = safeStack.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gi, "Unexpected token '[REDACTED]', ");
-    safeStack = safeStack.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+    safeStack = safeStack.replace(/Unexpected token (?:'[^']*'|"[^"]*"|[^,]+),\s*/gis, "Unexpected token '[REDACTED]', ");
+    safeStack = safeStack.replace(/(?:\.\.\.)?(?:".*"|'.*')(?:\.\.\.)?\s+is not valid JSON/gis, '"[REDACTED]" is not valid JSON');
     if (safeStack.includes("is not valid JSON") && !safeStack.includes('"[REDACTED]" is not valid JSON')) {
-      safeStack = safeStack.replace(/.*?\s+is not valid JSON/gi, '"[REDACTED]" is not valid JSON');
+      safeStack = safeStack.replace(/.*?\s+is not valid JSON/gis, '"[REDACTED]" is not valid JSON');
     }
     if (typeof err.body === "string" && err.body.length > 0) {
       safeStack = safeStack.replaceAll(err.body, "[REDACTED]");
