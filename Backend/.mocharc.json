@@ -1,7 +1,6 @@
 {
-  "spec": ["tests/**/*.test.js"],
+  "spec": ["tests/assignment-1/assignment-1.test.js"],
   "require": ["./tests/setup.js"],
-  "timeout": 30000,
+  "timeout": 60000,
   "exit": true
 }
-

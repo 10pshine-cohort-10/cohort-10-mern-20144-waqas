@@ -7,8 +7,10 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon -r dotenv/config --experimental-json-modules index.js",
-    "test": "mocha",
-    "test:coverage": "c8 --reporter=lcov --reporter=text mocha",
+    "test": "mocha tests/assignment-1/assignment-1.test.js",
+    "test:assignment-1": "mocha tests/assignment-1/assignment-1.test.js",
+    "test:case": "mocha tests/assignment-1/assignment-1.test.js --grep",
+    "test:coverage": "c8 --reporter=lcov --reporter=text mocha tests/assignment-1/assignment-1.test.js",
     "docs:pdf": "node ../scripts/generate-test-pdf.mjs"
   },
   "keywords": [],

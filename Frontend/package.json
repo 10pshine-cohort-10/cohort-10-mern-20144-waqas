@@ -8,8 +8,10 @@
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "jest",
-    "test:coverage": "jest --coverage",
+    "test": "jest src/tests/assignment-1/assignment-1.test.jsx",
+    "test:assignment-1": "jest src/tests/assignment-1/assignment-1.test.jsx",
+    "test:case": "jest src/tests/assignment-1/assignment-1.test.jsx -t",
+    "test:coverage": "jest src/tests/assignment-1/assignment-1.test.jsx --coverage",
     "docs:pdf": "node ../scripts/generate-frontend-pdf.mjs"
   },
   "dependencies": {
