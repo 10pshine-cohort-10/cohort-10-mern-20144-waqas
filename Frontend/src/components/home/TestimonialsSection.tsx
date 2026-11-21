@@ -1,32 +1,28 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 
-/**
- * @typedef {Object} Testimonial
- * @property {string} id
- * @property {string} name
- * @property {string} initials
- * @property {string} avatar
- * @property {string} review
- * @property {string} accent
- * @property {string} borderGlow
- */
+export interface Testimonial {
+  id: string;
+  name: string;
+  initials: string;
+  avatar: string;
+  review: string;
+  accent: string;
+  borderGlow: string;
+}
 
-/**
- * @typedef {Object} ProfileAvatarProps
- * @property {string} name
- * @property {string} initials
- * @property {string} avatar
- * @property {string} accent
- */
+interface ProfileAvatarProps {
+  name: string;
+  initials: string;
+  avatar: string;
+  accent: string;
+}
 
-/**
- * @typedef {Object} TestimonialCardProps
- * @property {Testimonial} item
- */
+interface TestimonialCardProps {
+  item: Testimonial;
+}
 
-/** @type {Testimonial[]} */
-const TESTIMONIALS = [
+const TESTIMONIALS: Testimonial[] = [
   {
     id: "t1",
     name: "Maya Patel",
@@ -119,11 +115,7 @@ const TESTIMONIALS = [
   },
 ];
 
-/**
- * @param {ProfileAvatarProps} props
- * @returns {import("react").JSX.Element}
- */
-function ProfileAvatar({ name, initials, avatar, accent }) {
+function ProfileAvatar({ name, initials, avatar, accent }: ProfileAvatarProps) {
   const [hasError, setHasError] = useState(false);
 
   if (hasError) {
@@ -150,11 +142,7 @@ function ProfileAvatar({ name, initials, avatar, accent }) {
   );
 }
 
-/**
- * @param {TestimonialCardProps} props
- * @returns {import("react").JSX.Element}
- */
-function TestimonialCard({ item }) {
+function TestimonialCard({ item }: TestimonialCardProps) {
   return (
     <article
       className={`notiq-feature-item group relative flex w-[280px] shrink-0 flex-col justify-between overflow-hidden rounded-3xl p-5 sm:w-[320px] sm:p-6 ${item.borderGlow}`}
@@ -183,10 +171,11 @@ function TestimonialCard({ item }) {
   );
 }
 
-/* Testimonials Section */
 function TestimonialsSection() {
   const shouldReduceMotion = useReducedMotion();
-  const [isPaused, setIsPaused] = useState(false);
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isPaused = isManuallyPaused || isHovered;
 
   return (
     <section
@@ -230,15 +219,15 @@ function TestimonialsSection() {
           <div className="mb-4 flex justify-center">
             <button
               type="button"
-              onClick={() => setIsPaused((prev) => !prev)}
-              aria-label={isPaused ? "Resume testimonial marquee" : "Pause testimonial marquee"}
+              onClick={() => setIsManuallyPaused((prev) => !prev)}
+              aria-label={isManuallyPaused ? "Resume testimonial marquee" : "Pause testimonial marquee"}
               className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1 text-xs font-medium text-body shadow-sm backdrop-blur-md transition-all hover:bg-surface hover:text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
             >
               <span
-                className={`h-2 w-2 rounded-full ${isPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`}
+                className={`h-2 w-2 rounded-full ${isManuallyPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`}
                 aria-hidden="true"
               />
-              <span>{isPaused ? "Resume auto-scroll" : "Pause auto-scroll"}</span>
+              <span>{isManuallyPaused ? "Resume auto-scroll" : "Pause auto-scroll"}</span>
             </button>
           </div>
 
@@ -262,8 +251,8 @@ function TestimonialsSection() {
                 ease: "linear",
               },
             }}
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
             <div className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6">
               {TESTIMONIALS.map((item) => (
