@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 /**
  * @typedef {Object} Testimonial
@@ -185,6 +185,9 @@ function TestimonialCard({ item }) {
 
 /* Testimonials Section */
 function TestimonialsSection() {
+  const shouldReduceMotion = useReducedMotion();
+  const [isPaused, setIsPaused] = useState(false);
+
   return (
     <section
       id="testimonials"
@@ -212,44 +215,73 @@ function TestimonialsSection() {
         </motion.div>
       </div>
 
-      <div className="relative mt-10 w-full overflow-hidden sm:mt-12">
+      {shouldReduceMotion ? (
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-bg to-transparent sm:w-24"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-bg to-transparent sm:w-24"
-        />
-
-        <motion.div
-          className="flex w-max will-change-transform"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            x: {
-              repeat: Infinity,
-              repeatType: "loop",
-              duration: 42,
-              ease: "linear",
-            },
-          }}
+          tabIndex={0}
+          aria-label="Community love and user reviews"
+          className="mx-auto mt-10 flex max-w-7xl gap-4 overflow-x-auto px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 sm:mt-12 sm:gap-6 sm:px-6"
         >
-          <div className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6">
-            {TESTIMONIALS.map((item) => (
-              <TestimonialCard key={item.id} item={item} />
-            ))}
+          {TESTIMONIALS.map((item) => (
+            <TestimonialCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <div className="relative mt-10 w-full overflow-hidden sm:mt-12">
+          <div className="mb-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsPaused((prev) => !prev)}
+              aria-label={isPaused ? "Resume testimonial marquee" : "Pause testimonial marquee"}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1 text-xs font-medium text-body shadow-sm backdrop-blur-md transition-all hover:bg-surface hover:text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${isPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`}
+                aria-hidden="true"
+              />
+              <span>{isPaused ? "Resume auto-scroll" : "Pause auto-scroll"}</span>
+            </button>
           </div>
 
           <div
             aria-hidden="true"
-            className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6"
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-bg to-transparent sm:w-24"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-bg to-transparent sm:w-24"
+          />
+
+          <motion.div
+            className="flex w-max will-change-transform"
+            animate={isPaused ? undefined : { x: ["0%", "-50%"] }}
+            transition={{
+              x: {
+                repeat: Infinity,
+                repeatType: "loop",
+                duration: 42,
+                ease: "linear",
+              },
+            }}
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
           >
-            {TESTIMONIALS.map((item) => (
-              <TestimonialCard key={`${item.id}-clone`} item={item} />
-            ))}
-          </div>
-        </motion.div>
-      </div>
+            <div className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6">
+              {TESTIMONIALS.map((item) => (
+                <TestimonialCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6"
+            >
+              {TESTIMONIALS.map((item) => (
+                <TestimonialCard key={`${item.id}-clone`} item={item} />
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 }

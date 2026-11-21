@@ -6,7 +6,6 @@ import logo from "../assets/logo.png";
 import Seo from "../components/common/Seo";
 import api from "../services/api";
 import useAuthStore, {
-  INACTIVITY_TIMEOUT_MS,
   type AuthState,
   type User,
 } from "../store/useAuthStore";
@@ -79,15 +78,8 @@ function Dashboard(): React.JSX.Element {
 
     const checkInterval = setInterval(() => {
       try {
-        const lastActiveStr = localStorage.getItem("notiq_last_active");
-        if (lastActiveStr) {
-          const lastActive = parseInt(lastActiveStr, 10);
-          if (
-            !Number.isNaN(lastActive) &&
-            Date.now() - lastActive > INACTIVITY_TIMEOUT_MS
-          ) {
-            handleInactivityLogout();
-          }
+        if (isSessionExpired()) {
+          handleInactivityLogout();
         }
       } catch {
         // Ignore check errors
@@ -96,16 +88,9 @@ function Dashboard(): React.JSX.Element {
 
     const handleWindowFocus = (): void => {
       try {
-        const lastActiveStr = localStorage.getItem("notiq_last_active");
-        if (lastActiveStr) {
-          const lastActive = parseInt(lastActiveStr, 10);
-          if (
-            !Number.isNaN(lastActive) &&
-            Date.now() - lastActive > INACTIVITY_TIMEOUT_MS
-          ) {
-            handleInactivityLogout();
-            return;
-          }
+        if (isSessionExpired()) {
+          handleInactivityLogout();
+          return;
         }
         handleUserInteraction();
       } catch {

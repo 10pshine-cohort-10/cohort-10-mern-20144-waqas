@@ -411,6 +411,12 @@ const FE_METADATA = {
   }
 };
 
+/**
+ * Executes an individual frontend test case wrapped with standardized metadata reporting.
+ *
+ * @param {keyof typeof FE_METADATA} id - Unique test case identifier.
+ * @param {() => void | Promise<void>} testFn - Test execution callback function.
+ */
 function runFrontendTest(id, testFn) {
   const meta = FE_METADATA[id] || {
     title: id,
@@ -1262,7 +1268,7 @@ describe("Assignment 1 — Centralized Frontend Test Suite", () => {
       await waitFor(() => {
         expect(screen.getByText("Link Expired or Invalid")).toBeInTheDocument();
       });
-      expect(screen.queryByRole("button", { name: "Reset Password" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Update Password" })).not.toBeInTheDocument();
     });
 
     runFrontendTest("FE-A1-047", async () => {
