@@ -1,6 +1,24 @@
+import "dotenv/config";
+
+const isTest = process.env.NODE_ENV === "test";
+
+/**
+ * Validates and returns a required secret environment variable.
+ *
+ * @param {string} name - Environment variable name to read.
+ * @returns {string} The configured secret value.
+ */
+function requireSecret(name) {
+  const value = process.env[name];
+  if (!value && !isTest) {
+    throw new Error(`${name} is required in environment variables`);
+  }
+  return value || "";
+}
+
 const jwtConfig = {
-  accessSecret: process.env.JWT_ACCESS_SECRET || "",
-  refreshSecret: process.env.JWT_REFRESH_SECRET || "",
+  accessSecret: requireSecret("JWT_ACCESS_SECRET"),
+  refreshSecret: requireSecret("JWT_REFRESH_SECRET"),
   accessExpiry: process.env.ACCESS_TOKEN_EXPIRY || "15m",
   refreshExpiry: process.env.REFRESH_TOKEN_EXPIRY || "7d",
   bcryptSaltRounds: Number(process.env.BCRYPT_SALT_ROUNDS) || 12,

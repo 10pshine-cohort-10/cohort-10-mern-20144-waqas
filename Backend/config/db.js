@@ -14,6 +14,14 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
 
+/**
+ * Error listener for unexpected errors emitted by idle pooled clients.
+ * @param {Error} err - Unexpected pool error.
+ */
+pool.on("error", (err) => {
+  logger.error({ err }, "Unexpected PostgreSQL idle client pool error");
+});
+
 const USERS_SCHEMA_SQL = `
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,

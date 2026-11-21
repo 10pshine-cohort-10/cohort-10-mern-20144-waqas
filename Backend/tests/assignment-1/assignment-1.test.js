@@ -352,7 +352,7 @@ describe("Assignment 1 — Centralized Backend Test Suite", function () {
     try {
       await initDB();
       await pool.query(
-        "DELETE FROM users WHERE username LIKE 'test_a1_%' OR username LIKE 'mocha_test_%'",
+        "DELETE FROM users WHERE username LIKE 'test\\_a1\\_%' OR username LIKE 'mocha\\_test\\_%'",
       );
     } catch (err) {
       console.warn("Database pre-check notice:", err.message);
@@ -374,7 +374,7 @@ describe("Assignment 1 — Centralized Backend Test Suite", function () {
     }
     try {
       await pool.query(
-        "DELETE FROM users WHERE username LIKE 'test_a1_%' OR username LIKE 'mocha_test_%'",
+        "DELETE FROM users WHERE username LIKE 'test\\_a1\\_%' OR username LIKE 'mocha\\_test\\_%'",
       );
     } catch (err) {
       console.warn("Database cleanup notice:", err.message);
