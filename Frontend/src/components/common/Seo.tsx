@@ -24,19 +24,25 @@ function upsertMetaTag(
   attributeValue: string,
   content?: string,
 ): void {
-  if (!content) return;
-
-  let element = document.head.querySelector<HTMLMetaElement>(
+  const element = document.head.querySelector<HTMLMetaElement>(
     `meta[${attributeName}="${attributeValue}"]`,
   );
 
-  if (!element) {
-    element = document.createElement("meta");
-    element.setAttribute(attributeName, attributeValue);
-    document.head.appendChild(element);
+  if (!content) {
+    if (element) {
+      element.remove();
+    }
+    return;
   }
 
-  element.setAttribute("content", content);
+  if (!element) {
+    const newElement = document.createElement("meta");
+    newElement.setAttribute(attributeName, attributeValue);
+    document.head.appendChild(newElement);
+    newElement.setAttribute("content", content);
+  } else {
+    element.setAttribute("content", content);
+  }
 }
 
 function upsertCanonicalLink(href?: string): void {

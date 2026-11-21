@@ -1,32 +1,28 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
 
-/**
- * @typedef {Object} Testimonial
- * @property {string} id
- * @property {string} name
- * @property {string} initials
- * @property {string} avatar
- * @property {string} review
- * @property {string} accent
- * @property {string} borderGlow
- */
+export interface Testimonial {
+  id: string;
+  name: string;
+  initials: string;
+  avatar: string;
+  review: string;
+  accent: string;
+  borderGlow: string;
+}
 
-/**
- * @typedef {Object} ProfileAvatarProps
- * @property {string} name
- * @property {string} initials
- * @property {string} avatar
- * @property {string} accent
- */
+interface ProfileAvatarProps {
+  name: string;
+  initials: string;
+  avatar: string;
+  accent: string;
+}
 
-/**
- * @typedef {Object} TestimonialCardProps
- * @property {Testimonial} item
- */
+interface TestimonialCardProps {
+  item: Testimonial;
+}
 
-/** @type {Testimonial[]} */
-const TESTIMONIALS = [
+const TESTIMONIALS: Testimonial[] = [
   {
     id: "t1",
     name: "Maya Patel",
@@ -119,11 +115,7 @@ const TESTIMONIALS = [
   },
 ];
 
-/**
- * @param {ProfileAvatarProps} props
- * @returns {import("react").JSX.Element}
- */
-function ProfileAvatar({ name, initials, avatar, accent }) {
+function ProfileAvatar({ name, initials, avatar, accent }: ProfileAvatarProps) {
   const [hasError, setHasError] = useState(false);
 
   if (hasError) {
@@ -150,11 +142,7 @@ function ProfileAvatar({ name, initials, avatar, accent }) {
   );
 }
 
-/**
- * @param {TestimonialCardProps} props
- * @returns {import("react").JSX.Element}
- */
-function TestimonialCard({ item }) {
+function TestimonialCard({ item }: TestimonialCardProps) {
   return (
     <article
       className={`notiq-feature-item group relative flex w-[280px] shrink-0 flex-col justify-between overflow-hidden rounded-3xl p-5 sm:w-[320px] sm:p-6 ${item.borderGlow}`}
@@ -183,8 +171,42 @@ function TestimonialCard({ item }) {
   );
 }
 
-/* Testimonials Section */
 function TestimonialsSection() {
+  const shouldReduceMotion = useReducedMotion();
+  const [isManuallyPaused, setIsManuallyPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isPaused = isManuallyPaused || isHovered;
+
+  const x = useMotionValue("0%");
+  const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const controls = animate(x, ["0%", "-50%"], {
+      repeat: Infinity,
+      repeatType: "loop",
+      duration: 42,
+      ease: "linear",
+    });
+
+    controlsRef.current = controls;
+
+    return () => {
+      controls.stop();
+      controlsRef.current = null;
+    };
+  }, [shouldReduceMotion, x]);
+
+  useEffect(() => {
+    if (!controlsRef.current) return;
+    if (isPaused) {
+      controlsRef.current.pause();
+    } else {
+      controlsRef.current.play();
+    }
+  }, [isPaused]);
+
   return (
     <section
       id="testimonials"
@@ -212,44 +234,65 @@ function TestimonialsSection() {
         </motion.div>
       </div>
 
-      <div className="relative mt-10 w-full overflow-hidden sm:mt-12">
+      {shouldReduceMotion ? (
         <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-bg to-transparent sm:w-24"
-        />
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-bg to-transparent sm:w-24"
-        />
-
-        <motion.div
-          className="flex w-max will-change-transform"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            x: {
-              repeat: Infinity,
-              repeatType: "loop",
-              duration: 42,
-              ease: "linear",
-            },
-          }}
+          tabIndex={0}
+          aria-label="Community love and user reviews"
+          className="mx-auto mt-10 flex max-w-7xl gap-4 overflow-x-auto px-4 py-4 focus:outline-none focus:ring-2 focus:ring-primary/40 sm:mt-12 sm:gap-6 sm:px-6"
         >
-          <div className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6">
-            {TESTIMONIALS.map((item) => (
-              <TestimonialCard key={item.id} item={item} />
-            ))}
+          {TESTIMONIALS.map((item) => (
+            <TestimonialCard key={item.id} item={item} />
+          ))}
+        </div>
+      ) : (
+        <div className="relative mt-10 w-full overflow-hidden sm:mt-12">
+          <div className="mb-4 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setIsManuallyPaused((prev) => !prev)}
+              aria-label={isManuallyPaused ? "Resume testimonial marquee" : "Pause testimonial marquee"}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/80 px-3.5 py-1 text-xs font-medium text-body shadow-sm backdrop-blur-md transition-all hover:bg-surface hover:text-heading focus:outline-none focus:ring-2 focus:ring-primary/40"
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${isManuallyPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`}
+                aria-hidden="true"
+              />
+              <span>{isManuallyPaused ? "Resume auto-scroll" : "Pause auto-scroll"}</span>
+            </button>
           </div>
 
           <div
             aria-hidden="true"
-            className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6"
+            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-bg to-transparent sm:w-24"
+          />
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-bg to-transparent sm:w-24"
+          />
+
+          <motion.div
+            className="flex w-max will-change-transform"
+            style={{ x }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
           >
-            {TESTIMONIALS.map((item) => (
-              <TestimonialCard key={`${item.id}-clone`} item={item} />
-            ))}
-          </div>
-        </motion.div>
-      </div>
+            <div className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6">
+              {TESTIMONIALS.map((item) => (
+                <TestimonialCard key={item.id} item={item} />
+              ))}
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="flex shrink-0 gap-4 pr-4 sm:gap-6 sm:pr-6"
+            >
+              {TESTIMONIALS.map((item) => (
+                <TestimonialCard key={`${item.id}-clone`} item={item} />
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
     </section>
   );
 }
