@@ -507,9 +507,14 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
     .then(() => {
       logger.info({ userId: user.id }, "Password reset token created and email sent");
     })
-    .catch((emailError) => {
-      logger.error({ err: emailError, userId: user.id }, "Failed to send reset email");
-    });
+    .catch(
+      /**
+       * @param {unknown} emailError
+       */
+      (emailError) => {
+        logger.error({ err: emailError, userId: user.id }, "Failed to send reset email");
+      },
+    );
 
   return res.status(200).json({
     statusCode: 200,

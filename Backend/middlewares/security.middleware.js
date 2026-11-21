@@ -17,13 +17,21 @@ export function securityHeaders(_req, res, next) {
   next();
 }
 
+/**
+ * @typedef {Object} RateLimitRecord
+ * @property {number} count - Total requests within the current window.
+ * @property {number} resetTime - Timestamp in ms when the rate limit window resets.
+ */
+
 export function createAuthRateLimiter({
   windowMs = 15 * 60 * 1000,
   max = 25,
   skipInTest = true,
 } = {}) {
+  /** @type {Map<string, RateLimitRecord>} */
   const hits = new Map();
 
+  /** @type {NodeJS.Timeout} */
   const sweepTimer = setInterval(() => {
     const now = Date.now();
     for (const [key, record] of hits) {

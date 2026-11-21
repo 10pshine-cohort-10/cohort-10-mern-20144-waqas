@@ -2,6 +2,12 @@ import "dotenv/config";
 
 const isTest = process.env.NODE_ENV === "test";
 
+/**
+ * Validates and returns a required secret environment variable.
+ *
+ * @param {string} name - Environment variable name to read.
+ * @returns {string} The configured secret value.
+ */
 function requireSecret(name) {
   const value = process.env[name];
   if (!value && !isTest) {
