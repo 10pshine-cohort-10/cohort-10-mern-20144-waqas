@@ -499,21 +499,17 @@ export const requestPasswordReset = asyncHandler(async (req, res) => {
 
   const resetUrl = `${clientUrl.replace(/\/$/, "")}/reset-password?token=${rawToken}`;
 
-  try {
-    await sendPasswordResetEmail({
-      to: user.email,
-      resetUrl,
-      username: user.username,
+  sendPasswordResetEmail({
+    to: user.email,
+    resetUrl,
+    username: user.username,
+  })
+    .then(() => {
+      logger.info({ userId: user.id }, "Password reset token created and email sent");
+    })
+    .catch((emailError) => {
+      logger.error({ err: emailError, userId: user.id }, "Failed to send reset email");
     });
-  } catch (emailError) {
-    logger.error({ err: emailError, userId: user.id }, "Failed to send reset email");
-    throw new ApiError(
-      500,
-      "Unable to send password reset email at this moment. Please try again later.",
-    );
-  }
-
-  logger.info({ userId: user.id }, "Password reset token created and email sent");
 
   return res.status(200).json({
     statusCode: 200,

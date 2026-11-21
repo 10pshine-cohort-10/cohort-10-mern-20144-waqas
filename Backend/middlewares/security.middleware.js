@@ -24,6 +24,16 @@ export function createAuthRateLimiter({
 } = {}) {
   const hits = new Map();
 
+  const sweepTimer = setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of hits) {
+      if (now > record.resetTime) {
+        hits.delete(key);
+      }
+    }
+  }, windowMs);
+  sweepTimer.unref();
+
   return (req, res, next) => {
     if (skipInTest && process.env.NODE_ENV === "test") {
       return next();

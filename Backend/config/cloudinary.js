@@ -55,12 +55,13 @@ export const uploadOnCloudinary = (fileBuffer, folder = "notesapp/uploads", publ
  * Deletes an asset from Cloudinary by its public ID.
  *
  * @param {string} publicId - Public identifier of the asset to delete.
+ * @param {"image" | "video" | "raw"} [resourceType="image"] - Cloudinary resource type of the asset.
  * @returns {Promise<any | null>} Deletion response or null if invalid or on error.
  */
-export const deleteFromCloudinary = async (publicId) => {
+export const deleteFromCloudinary = async (publicId, resourceType = "image") => {
   try {
     if (!publicId) return null;
-    return await cloudinary.uploader.destroy(publicId);
+    return await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
   } catch (error) {
     console.error("Cloudinary deletion error:", error);
     return null;
