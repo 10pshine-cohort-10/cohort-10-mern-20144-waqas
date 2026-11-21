@@ -1,0 +1,308 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ==========================================================================
+   Notiq Official Design System Tokens
+   Single source of truth for Light Mode, Dark Mode, and Neon RGB Accents.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* Surfaces */
+  --notiq-bg: #F7F8FC;
+  --notiq-surface: #FFFFFF;
+  --notiq-elevated: #FFFFFF;
+  --notiq-glass: rgba(255, 255, 255, 0.34);
+  --notiq-glass-menu: rgba(255, 255, 255, 0.72);
+  --notiq-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.85), inset 0 -1px 0 rgba(23, 23, 42, 0.03);
+
+  /* Brand & Semantic Accents */
+  --notiq-primary: #7657FF;
+  --notiq-primary-hover: #6443F5;
+  --notiq-on-primary: #FFFFFF;
+  --notiq-secondary: #397BFF;
+  --notiq-secondary-hover: #2566EB;
+  --notiq-accent-cyan: #00B8D9;
+  --notiq-accent-pink: #E84FAF;
+
+  /* Neon RGB Accents */
+  --notiq-neon-violet: #9275FF;
+  --notiq-neon-blue: #528BFF;
+  --notiq-neon-cyan: #00D9F5;
+  --notiq-neon-pink: #FF5BC8;
+
+  /* Typography */
+  --notiq-heading: #17172A;
+  --notiq-body: #62647A;
+  --notiq-muted: #9698AA;
+
+  /* Borders & Focus */
+  --notiq-border: #E8E9F2;
+  --notiq-glass-border: rgba(255, 255, 255, 0.6);
+  --notiq-ring: rgba(118, 87, 255, 0.35);
+
+  /* Elevation & Subtle Gradients */
+  --notiq-shadow-pill: 0 8px 32px rgba(23, 23, 42, 0.06), 0 2px 8px rgba(23, 23, 42, 0.03);
+  --notiq-shadow-card: 0 4px 24px rgba(23, 23, 42, 0.04);
+  --notiq-shadow-primary: 0 4px 14px rgba(118, 87, 255, 0.28);
+  --notiq-shadow-primary-hover: 0 8px 22px rgba(118, 87, 255, 0.38);
+  --notiq-gradient-primary: linear-gradient(135deg, #7657FF 0%, #397BFF 55%, #00B8D9 100%);
+  --notiq-gradient-brand: linear-gradient(120deg, #7657FF 0%, #397BFF 42%, #00B8D9 75%, #E84FAF 100%);
+  --notiq-gradient-neon-subtle: linear-gradient(
+    135deg,
+    rgba(118, 87, 255, 0.11) 0%,
+    rgba(57, 123, 255, 0.09) 55%,
+    rgba(0, 184, 217, 0.09) 100%
+  );
+  --notiq-hero-glow:
+    radial-gradient(60% 52% at 50% 42%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 75%),
+    radial-gradient(38% 42% at 14% 26%, rgba(118, 87, 255, 0.1) 0%, transparent 72%),
+    radial-gradient(36% 40% at 86% 24%, rgba(57, 123, 255, 0.09) 0%, transparent 72%),
+    radial-gradient(34% 38% at 82% 78%, rgba(0, 184, 217, 0.09) 0%, transparent 72%),
+    radial-gradient(32% 36% at 18% 80%, rgba(232, 79, 175, 0.08) 0%, transparent 72%);
+  --notiq-shadow-float: 0 14px 36px rgba(23, 23, 42, 0.07), 0 2px 10px rgba(118, 87, 255, 0.06);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --notiq-bg: #10111B;
+  --notiq-surface: #191B2A;
+  --notiq-elevated: #22243A;
+  --notiq-glass: rgba(25, 27, 42, 0.38);
+  --notiq-glass-menu: rgba(25, 27, 42, 0.76);
+  --notiq-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+
+  /* Brand & Semantic Accents */
+  --notiq-primary: #9275FF;
+  --notiq-primary-hover: #A48CFF;
+  --notiq-on-primary: #10111B;
+  --notiq-secondary: #528BFF;
+  --notiq-secondary-hover: #6B9EFF;
+  --notiq-accent-cyan: #00D9F5;
+  --notiq-accent-pink: #FF5BC8;
+
+  /* Neon RGB Accents */
+  --notiq-neon-violet: #9275FF;
+  --notiq-neon-blue: #528BFF;
+  --notiq-neon-cyan: #00D9F5;
+  --notiq-neon-pink: #FF5BC8;
+
+  /* Typography */
+  --notiq-heading: #F5F5FF;
+  --notiq-body: #B9BBD0;
+  --notiq-muted: #85879F;
+
+  /* Borders & Focus */
+  --notiq-border: #303249;
+  --notiq-glass-border: rgba(255, 255, 255, 0.12);
+  --notiq-ring: rgba(146, 117, 255, 0.45);
+
+  /* Elevation & Subtle Gradients */
+  --notiq-shadow-pill: 0 10px 36px rgba(0, 0, 0, 0.38), 0 2px 10px rgba(0, 0, 0, 0.22);
+  --notiq-shadow-card: 0 8px 28px rgba(0, 0, 0, 0.28);
+  --notiq-shadow-primary: 0 4px 16px rgba(146, 117, 255, 0.28);
+  --notiq-shadow-primary-hover: 0 8px 24px rgba(146, 117, 255, 0.42);
+  --notiq-gradient-primary: linear-gradient(135deg, #9275FF 0%, #528BFF 55%, #00D9F5 100%);
+  --notiq-gradient-brand: linear-gradient(120deg, #9275FF 0%, #528BFF 42%, #00D9F5 75%, #FF5BC8 100%);
+  --notiq-gradient-neon-subtle: linear-gradient(
+    135deg,
+    rgba(146, 117, 255, 0.18) 0%,
+    rgba(82, 139, 255, 0.14) 55%,
+    rgba(0, 217, 245, 0.14) 100%
+  );
+  --notiq-hero-glow:
+    radial-gradient(56% 48% at 50% 42%, rgba(146, 117, 255, 0.12) 0%, rgba(16, 17, 27, 0) 75%),
+    radial-gradient(38% 42% at 14% 26%, rgba(146, 117, 255, 0.15) 0%, transparent 72%),
+    radial-gradient(36% 40% at 86% 24%, rgba(82, 139, 255, 0.14) 0%, transparent 72%),
+    radial-gradient(34% 38% at 82% 78%, rgba(0, 217, 245, 0.11) 0%, transparent 72%),
+    radial-gradient(32% 36% at 18% 80%, rgba(255, 91, 200, 0.1) 0%, transparent 72%);
+  --notiq-shadow-float: 0 18px 40px rgba(0, 0, 0, 0.42), 0 2px 12px rgba(146, 117, 255, 0.1);
+}
+
+@theme inline {
+  --color-bg: var(--notiq-bg);
+  --color-surface: var(--notiq-surface);
+  --color-elevated: var(--notiq-elevated);
+  --color-glass: var(--notiq-glass);
+
+  --color-primary: var(--notiq-primary);
+  --color-primary-hover: var(--notiq-primary-hover);
+  --color-on-primary: var(--notiq-on-primary);
+  --color-secondary: var(--notiq-secondary);
+  --color-secondary-hover: var(--notiq-secondary-hover);
+  --color-accent-cyan: var(--notiq-accent-cyan);
+  --color-accent-pink: var(--notiq-accent-pink);
+
+  --color-neon-violet: var(--notiq-neon-violet);
+  --color-neon-blue: var(--notiq-neon-blue);
+  --color-neon-cyan: var(--notiq-neon-cyan);
+  --color-neon-pink: var(--notiq-neon-pink);
+
+  --color-heading: var(--notiq-heading);
+  --color-body: var(--notiq-body);
+  --color-muted: var(--notiq-muted);
+  --color-border: var(--notiq-border);
+}
+
+@layer base {
+  html {
+    background-color: var(--notiq-bg);
+    color: var(--notiq-body);
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--notiq-bg);
+    color: var(--notiq-body);
+    overflow-x: clip;
+    transition: background-color 150ms ease-out, color 150ms ease-out;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    color: var(--notiq-heading);
+  }
+
+  input,
+  textarea,
+  select {
+    background-color: var(--notiq-surface);
+    color: var(--notiq-heading);
+    border-color: var(--notiq-border);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--notiq-muted);
+  }
+
+  ::selection {
+    background-color: rgba(146, 117, 255, 0.24);
+    color: var(--notiq-heading);
+  }
+}
+
+@layer components {
+  .notiq-card {
+    background-color: var(--notiq-surface);
+    border: 1px solid var(--notiq-border);
+    box-shadow: var(--notiq-shadow-card);
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .notiq-glass {
+    background-color: var(--notiq-glass);
+    border: 1px solid var(--notiq-glass-border);
+    box-shadow: var(--notiq-shadow-pill), var(--notiq-glass-highlight);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .notiq-glass-menu {
+    background-color: var(--notiq-glass-menu);
+    border: 1px solid var(--notiq-glass-border);
+    box-shadow: var(--notiq-shadow-pill), var(--notiq-glass-highlight);
+    backdrop-filter: blur(10px) saturate(140%);
+    -webkit-backdrop-filter: blur(10px) saturate(140%);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .notiq-btn-primary {
+    background-image: var(--notiq-gradient-primary);
+    color: var(--notiq-on-primary);
+    box-shadow: var(--notiq-shadow-primary);
+    transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s ease, filter 0.15s ease;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .notiq-btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: var(--notiq-shadow-primary-hover);
+    transform: translateY(-1px) translateZ(0);
+  }
+
+  .notiq-btn-primary:active {
+    transform: translateY(0) translateZ(0);
+  }
+
+  .notiq-gradient-text {
+    background-image: var(--notiq-gradient-brand);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .notiq-hero-bg {
+    background-color: var(--notiq-bg);
+    background-image: var(--notiq-hero-glow);
+    transition: background-color 150ms ease-out;
+  }
+
+  .notiq-float-card {
+    background-color: var(--notiq-glass-menu);
+    border: 1px solid var(--notiq-glass-border);
+    box-shadow: var(--notiq-shadow-float), var(--notiq-glass-highlight);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .notiq-feature-item {
+    background-color: var(--notiq-glass-menu);
+    border: 1px solid var(--notiq-glass-border);
+    box-shadow: var(--notiq-shadow-card), var(--notiq-glass-highlight);
+    transition: background-color 150ms ease-out, border-color 150ms ease-out;
+  }
+
+  .notiq-underline {
+    background-image: var(--notiq-gradient-primary);
+  }
+}
+
+@keyframes notiq-float-slow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.notiq-animate-float {
+  animation: notiq-float-slow 7s ease-in-out infinite;
+}
+
+.notiq-animate-float-delayed {
+  animation: notiq-float-slow 8.5s ease-in-out 1.5s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .notiq-animate-float,
+  .notiq-animate-float-delayed {
+    animation: none;
+  }
+}
