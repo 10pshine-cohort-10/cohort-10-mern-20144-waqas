@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useMotionValue, useReducedMotion } from "framer-motion";
 
 export interface Testimonial {
   id: string;
@@ -177,6 +177,36 @@ function TestimonialsSection() {
   const [isHovered, setIsHovered] = useState(false);
   const isPaused = isManuallyPaused || isHovered;
 
+  const x = useMotionValue("0%");
+  const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
+
+  useEffect(() => {
+    if (shouldReduceMotion) return;
+
+    const controls = animate(x, ["0%", "-50%"], {
+      repeat: Infinity,
+      repeatType: "loop",
+      duration: 42,
+      ease: "linear",
+    });
+
+    controlsRef.current = controls;
+
+    return () => {
+      controls.stop();
+      controlsRef.current = null;
+    };
+  }, [shouldReduceMotion, x]);
+
+  useEffect(() => {
+    if (!controlsRef.current) return;
+    if (isPaused) {
+      controlsRef.current.pause();
+    } else {
+      controlsRef.current.play();
+    }
+  }, [isPaused]);
+
   return (
     <section
       id="testimonials"
@@ -242,15 +272,7 @@ function TestimonialsSection() {
 
           <motion.div
             className="flex w-max will-change-transform"
-            animate={isPaused ? undefined : { x: ["0%", "-50%"] }}
-            transition={{
-              x: {
-                repeat: Infinity,
-                repeatType: "loop",
-                duration: 42,
-                ease: "linear",
-              },
-            }}
+            style={{ x }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
